@@ -278,6 +278,7 @@ var i18n_de = {
 'settings:mode:umpire': 'Schiedsrichter',
 'settings:mode:display': 'Anzeigetafel',
 'settings:mode:referee': 'Referee',
+'settings:mode:result_mode': 'Ergebnisse',
 
 'exceptions:yellow-card-title': 'Gelbe Karte',
 'exceptions:yellow-card': 'Verwarnung',
@@ -525,6 +526,8 @@ var i18n_de = {
 'displaymode|tim': 'Tim',
 'displaymode|greyish': 'Gräulich',
 'displaymode|tournament_overview': 'Turnier-Übersicht',
+'displaymode|filtered_overview': 'Gefilterte Übersicht',
+'displaymode:filtered_courts': 'Felder anzeigen:',
 'displaymode|castall': 'Cast',
 'displaymode|bwfonlyplayers': 'BWF nur Spieler',
 'displaymode|onlyplayers': 'Nur Spieler',

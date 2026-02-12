@@ -413,6 +413,28 @@
 }
 
 
+/* Filtered overview - settings court checkboxes */
+.settings_display_filtered_courts {
+	margin-top: 0.4em;
+}
+.settings_display_filtered_courts_list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4em;
+	margin-top: 0.3em;
+}
+.d_fo_court_label {
+	display: flex;
+	align-items: center;
+	gap: 0.3em;
+	padding: 0.2em 0.5em;
+	border: 1px solid #aaa;
+	border-radius: 3px;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+
 .d_andre_team {
 	font-stretch: condensed;
 	position: relative;

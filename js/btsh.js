@@ -101,6 +101,22 @@ function send_score(s) {
 	});
 }
 
+function send_setup_update(s, match_id, props, cb) {
+	if (! /^bts_/.test(match_id)) {
+		return cb && cb(null);
+	}
+	var raw_id = match_id.substring('bts_'.length);
+	var url = baseurl + 'h/' + encodeURIComponent(tournament_key) + '/m/' + encodeURIComponent(raw_id) + '/setup';
+	_request_json(s, 'btsh.setup', {
+		method: 'POST',
+		url: url,
+		data: JSON.stringify(props),
+		contentType: 'application/json; charset=utf-8',
+	}, function(err) {
+		if (cb) cb(err);
+	});
+}
+
 function sync(s) {
 	send_score(s);
 }
@@ -190,6 +206,7 @@ function courts(s) {
 return {
 	ui_init: ui_init,
 	send_press: send_press,
+	send_setup_update: send_setup_update,
 	list_matches: list_matches,
 	sync: sync,
 	courts: courts,

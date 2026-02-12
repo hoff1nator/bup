@@ -36,7 +36,7 @@ function record(s) {
 
 	var orig_hval = window.location.hash.substr(1);
 	var hval = orig_hval;
-	hval = hval.replace(/(?:^|&)(?:m|display|settings|event_scoresheets|scoresheet|eventsheet|es_preview|stats|netstats|order|urlexport|mo|editevent|setupsheet|referee_mode|dads|court|dm_style)(?:=[^&]*)?(?=&|$)/g, '');
+	hval = hval.replace(/(?:^|&)(?:m|display|settings|event_scoresheets|scoresheet|eventsheet|es_preview|stats|netstats|order|urlexport|mo|editevent|setupsheet|referee_mode|result_mode|dads|court|dm_style)(?:=[^&]*)?(?=&|$)/g, '');
 	hval = hval.replace(/^&+|&+$/g, '');
 
 	if (s.initialized && (settings.get_mode(s) === 'umpire')) {
@@ -59,6 +59,11 @@ function record(s) {
 			hval += '&';
 		}
 		hval += 'referee_mode';
+	} else if (s.ui.resultmode_visible) {
+		if (hval.length > 1) {
+			hval += '&';
+		}
+		hval += 'result_mode';
 	} else if (s.ui.scoresheet_visible) {
 		if (hval.length > 1) {
 			hval += '&';
@@ -167,6 +172,12 @@ function load_by_hash() {
 		show_func = refmode_referee_ui.show;
 	} else {
 		hide_funcs.push(refmode_referee_ui.hide);
+	}
+
+	if (typeof qs.result_mode != 'undefined') {
+		show_func = resultmode.show;
+	} else {
+		hide_funcs.push(resultmode.hide);
 	}
 
 	if (qs.eventsheet) {

@@ -277,6 +277,7 @@ var i18n_en = {
 'settings:mode:umpire': 'Umpire',
 'settings:mode:display': 'Display',
 'settings:mode:referee': 'Referee',
+'settings:mode:result_mode': 'Results',
 
 'exceptions:yellow-card-title': 'Yellow card',
 'exceptions:yellow-card': 'Warning',
@@ -531,6 +532,8 @@ var i18n_en = {
 'displaymode|clubplayers': 'team + players',
 'displaymode|clubplayerslr': 'team + players (left / right)',
 'displaymode|tournament_overview': 'tournament overview',
+'displaymode|filtered_overview': 'filtered overview',
+'displaymode:filtered_courts': 'Show courts:',
 'displaymode|teamscore': 'team score',
 'displaymode|stripes': 'stripes',
 'displaymode|stream': 'stream',

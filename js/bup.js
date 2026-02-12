@@ -47,6 +47,7 @@ function ui_init() {
 	shortcuts.ui_init(state);
 	refmode_client_ui.ui_init(state);
 	refmode_referee_ui.ui_init();
+	resultmode.ui_init();
 	printing.set_orientation('landscape');
 
 	var hash_query = utils.parse_query_string(window.location.hash.substr(1));

@@ -87,6 +87,15 @@ function send_press(s, press) {
 	}
 }
 
+function send_setup_update(s, match_id, props, cb) {
+	var netw = get_netw();
+	if (netw && netw.send_setup_update) {
+		netw.send_setup_update(s, match_id, props, cb);
+	} else if (cb) {
+		cb(null);
+	}
+}
+
 function _score_text(network_score) {
 	if (!network_score) {
 		return '';
@@ -312,6 +321,7 @@ function ui_render_matchlist(s, event) {
 		click.on(btn, function() {
 			enter_match(match);
 		});
+
 	});
 }
 
@@ -843,6 +853,7 @@ return {
 	resync: resync,
 	score_transmitted: score_transmitted,
 	send_press: send_press,
+	send_setup_update: send_setup_update,
 	subscribe: subscribe,
 	supports_order: supports_order,
 	ui_init: ui_init,

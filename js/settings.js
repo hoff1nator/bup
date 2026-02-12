@@ -48,6 +48,7 @@ var default_settings = {
 	editmode_doubleclick: false,
 	displaymode_style: 'top+list',
 	displaymode_court_id: 1,
+	displaymode_filtered_courts: '[]',
 	wakelock: 'display',
 	click_mode: 'auto',
 	refmode_client_enabled: false,
@@ -219,6 +220,8 @@ var _settings_textfields = [
 	'refmode_referee_ws_url',
 	'refmode_client_node_name',
 	'dads_utime',
+
+	'displaymode_filtered_courts',
 
 	// really color fields
 	'd_c0',
@@ -470,7 +473,16 @@ function ui_init(s) {
 		e.preventDefault();
 		displaymode.hide();
 		refmode_referee_ui.hide();
+		resultmode.hide();
 		show();
+	});
+
+	click.qs('.settings_mode_result_mode', function(e) {
+		e.preventDefault();
+		displaymode.hide();
+		refmode_referee_ui.hide();
+		hide(true);
+		resultmode.show();
 	});
 }
 
@@ -483,6 +495,9 @@ function get_mode(s) {
 	}
 	if (s.ui.referee_mode) {
 		return 'referee';
+	}
+	if (s.ui.resultmode_visible) {
+		return 'result_mode';
 	}
 	return 'umpire';
 }

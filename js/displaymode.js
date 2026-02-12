@@ -24,6 +24,7 @@ var ALL_STYLES = [
 	'streamcourt',
 	'streamteam',
 	'tournament_overview',
+	'filtered_overview',
 	'andre',
 ];
 var ALL_COLORS = [
@@ -194,6 +195,7 @@ function hash(settings, event) {
 		colors: calc_colors(settings, event),
 		scale: settings.d_scale,
 		court_id: settings.displaymode_court_id,
+		filtered_courts: settings.displaymode_filtered_courts,
 		reverse_order: settings.displaymode_reverse_order,
 		show_pause: settings.d_show_pause,
 		team_colors: settings.d_team_colors,
@@ -431,6 +433,75 @@ function render_tournament_overview(s, container, event) {
 	var tbody = uiu.el(table, 'tbody');
 
 	event.courts.forEach(function(court, idx) {
+		var match = _match_by_court(event, court);
+		var nscore = (match ? match.network_score : 0) || [];
+
+		var tr = uiu.el(tbody, 'tr', {
+			style: (
+				'background:' + ((idx % 2 === 0) ? colors.bg : colors.bg3) + ';' +
+				'color:' + colors.fg + ';'
+			),
+		});
+		uiu.el(tr, 'td', 'd_to_court', court.label || compat.courtnum(court.id));
+		if (match) {
+			var setup = match.setup;
+			uiu.el(tr, 'td', {
+				'class': 'd_to_matchname',
+				style: (
+					'color:' + colors.fg2 + ';'
+				),
+			}, _match_name(setup));
+			_tournament_overview_render_players(tr, setup.teams[0].players);
+			_tournament_overview_render_players(tr, setup.teams[1].players);
+		} else {
+			uiu.el(tr, 'td', {
+				colspan: 3,
+			});
+		}
+		for (var game_idx = 0;game_idx < max_game_count;game_idx++) {
+			var score_td = uiu.el(tr, 'td', {
+				'class': 'd_to_score',
+				style: 'border-color:' + colors.border,
+			});
+
+			var n = nscore[game_idx];
+			if (match && n) {
+				var gwinner = calc.game_winner(match.setup.counting, game_idx, n[0], n[1]);
+				uiu.el(score_td, 'span', {
+					'class': ((gwinner === 'left') ? 'd_to_winning' : ''),
+				}, n[0]);
+				uiu.el(score_td, 'span', {
+					'class': 't_to_vs',
+				}, ':');
+				uiu.el(score_td, 'span', {
+					'class': ((gwinner === 'right') ? 'd_to_winning' : ''),
+				}, n[1]);
+			}
+		}
+	});
+}
+
+function render_filtered_overview(s, container, event) {
+	var max_game_count = _calc_max_games(event);
+	var colors = calc_colors(s.settings, event);
+
+	// Parse the list of selected court IDs from settings
+	var selected_ids;
+	try {
+		selected_ids = JSON.parse(s.settings.displaymode_filtered_courts || '[]');
+	} catch(e) {
+		selected_ids = [];
+	}
+
+	// Filter courts — if nothing is selected, show all (fallback)
+	var courts = event.courts.filter(function(c) {
+		return (selected_ids.length === 0) || (selected_ids.indexOf(String(c.court_id)) !== -1);
+	});
+
+	var table = uiu.el(container, 'table', 'd_to_table');
+	var tbody = uiu.el(table, 'tbody');
+
+	courts.forEach(function(court, idx) {
 		var match = _match_by_court(event, court);
 		var nscore = (match ? match.network_score : 0) || [];
 
@@ -2721,7 +2792,9 @@ function update(err, s, event) {
 
 	var ads_container = uiu.qs('.d_ads');
 	var changed_courts = (
-		!_last_painted_hash || !utils.deep_equal(cur_event_hash.courts, _last_painted_hash.courts));
+		!_last_painted_hash ||
+		!utils.deep_equal(cur_event_hash.courts, _last_painted_hash.courts) ||
+		(cur_event_hash.style !== (_last_painted_hash && _last_painted_hash.style)));
 	_last_painted_hash = cur_event_hash;
 
 	var new_settings_hash = utils.hash_new(_last_settings_hash, s.settings);
@@ -2747,6 +2820,45 @@ function update(err, s, event) {
 				attrs['selected'] = 'selected';
 			}
 			uiu.el(court_select, 'option', attrs, c.label || c.description || c.court_id);
+		});
+	}
+
+	// Filtered overview court checkboxes
+	var show_court_filter = option_applies(style, 'filtered_courts');
+	uiu.visible_qs('.settings_display_filtered_courts', show_court_filter);
+	if (show_court_filter && event.courts && changed_courts) {
+		var filter_container = uiu.qs('.settings_display_filtered_courts_list');
+		uiu.empty(filter_container);
+		var selected_ids;
+		try {
+			selected_ids = JSON.parse(s.settings.displaymode_filtered_courts || '[]');
+		} catch(e) {
+			selected_ids = [];
+		}
+		event.courts.forEach(function(c) {
+			var cid = String(c.court_id);
+			var label = uiu.el(filter_container, 'label', 'd_fo_court_label');
+			var cb = uiu.el(label, 'input', {
+				type: 'checkbox',
+				'data-court-id': cid,
+			});
+			cb.checked = (selected_ids.indexOf(cid) !== -1);
+			uiu.el(label, 'span', {}, c.label || c.description || c.court_id);
+			cb.addEventListener('change', function() {
+				var cur_ids;
+				try {
+					cur_ids = JSON.parse(s.settings.displaymode_filtered_courts || '[]');
+				} catch(e) {
+					cur_ids = [];
+				}
+				var idx = cur_ids.indexOf(cid);
+				if (cb.checked && idx === -1) {
+					cur_ids.push(cid);
+				} else if (!cb.checked && idx !== -1) {
+					cur_ids.splice(idx, 1);
+				}
+				settings.change(s, 'displaymode_filtered_courts', JSON.stringify(cur_ids));
+			});
 		});
 	}
 
@@ -2879,6 +2991,7 @@ function update(err, s, event) {
 		castall: render_castall,
 		greyish: render_greyish,
 		tournament_overview: render_tournament_overview,
+		filtered_overview: render_filtered_overview,
 		tim: render_tim,
 		teamscore: render_teamscore,
 		stream: render_stream,
@@ -3077,6 +3190,7 @@ function option_applies(style_id, option_name) {
 		teamscore: ['team_colors', 'c0', 'c1', 'cfg', 'cbg'],
 		tim: ['cbg', 'cfg', 'ctim_blue', 'ctim_active'],
 		tournament_overview: ['cfg', 'cbg', 'cbg3', 'cborder', 'cfg2'],
+		filtered_overview: ['cfg', 'cbg', 'cbg3', 'cborder', 'cfg2', 'filtered_courts'],
 		stripes: ['court_id', 'cbg', 'team_colors', 'c0', 'c1', 'cfg', 'cfgdark', 'cbg4', 'cserv'],
 	};
 	var bs = BY_STYLE[style_id];

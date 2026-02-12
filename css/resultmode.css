@@ -1,0 +1,311 @@
+.resultmode_wrapper {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: #1a1a2e;
+	z-index: 500;
+	overflow-y: auto;
+}
+
+.resultmode_layout {
+	max-width: 600px;
+	margin: 0 auto;
+	padding: 4vmin 3vmin;
+	color: #eee;
+	font-family: inherit;
+}
+
+.resultmode_header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 2vmin;
+	gap: 2vmin;
+}
+
+.resultmode_team {
+	flex: 1;
+	font-size: 4vmin;
+	font-weight: bold;
+	text-align: center;
+	word-break: break-word;
+}
+
+.resultmode_vs {
+	font-size: 3vmin;
+	color: #888;
+	padding: 0 1vmin;
+}
+
+.resultmode_match_name {
+	text-align: center;
+	font-size: 2.5vmin;
+	color: #aaa;
+	margin-bottom: 3vmin;
+}
+
+.resultmode_games {
+	margin-bottom: 3vmin;
+}
+
+.resultmode_game_row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 1.5vmin 2vmin;
+	margin-bottom: 1.5vmin;
+	background: #16213e;
+	border-radius: 1vmin;
+	border: 2px solid #333;
+	transition: border-color 0.2s, background 0.2s;
+}
+
+.resultmode_game_row.resultmode_left,
+.resultmode_game_row.resultmode_right {
+	border-color: #4caf50;
+	background: #0d2818;
+}
+
+.resultmode_game_row.resultmode_invalid {
+	border-color: #f44336;
+	background: #2d0a0a;
+}
+
+.resultmode_game_row.resultmode_inprogress {
+	border-color: #ff9800;
+}
+
+.resultmode_game_row.resultmode_decided {
+	opacity: 0.4;
+	pointer-events: none;
+}
+
+.resultmode_game_label {
+	font-size: 3vmin;
+	color: #bbb;
+	min-width: 12vmin;
+}
+
+.resultmode_score_inputs {
+	display: flex;
+	align-items: center;
+	gap: 2vmin;
+}
+
+.resultmode_score_input {
+	width: 10vmin;
+	min-width: 44px;
+	font-size: 5vmin;
+	text-align: center;
+	background: #0f3460;
+	color: #eee;
+	border: 1px solid #555;
+	border-radius: 0.5vmin;
+	padding: 0.5vmin;
+	-moz-appearance: textfield;
+}
+
+.resultmode_score_input::-webkit-inner-spin-button,
+.resultmode_score_input::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.resultmode_score_input:focus {
+	outline: none;
+	border-color: #4fc3f7;
+	background: #1a4a7a;
+}
+
+.resultmode_score_sep {
+	font-size: 4vmin;
+	color: #888;
+}
+
+.resultmode_presence_container {
+	display: flex;
+	flex-direction: column;
+	gap: 4vmin;
+	margin-top: 6vmin;
+}
+
+.resultmode_presence_btn {
+	width: 100%;
+	padding: 6vmin 3vmin;
+	font-size: 4vmin;
+	font-weight: bold;
+	background: #16213e;
+	color: #eee;
+	border: 2px solid #555;
+	border-radius: 1vmin;
+	cursor: pointer;
+	transition: background 0.2s, border-color 0.2s;
+	word-break: break-word;
+}
+
+.resultmode_presence_btn:hover {
+	background: #1e2d50;
+	border-color: #888;
+}
+
+.resultmode_presence_btn.resultmode_presence_confirmed {
+	background: #0d2818;
+	border-color: #4caf50;
+	color: #4caf50;
+	cursor: default;
+}
+
+.resultmode_confirm_btn {
+	display: block;
+	width: 100%;
+	padding: 3vmin;
+	font-size: 4vmin;
+	background: #4caf50;
+	color: #fff;
+	border: none;
+	border-radius: 1vmin;
+	cursor: pointer;
+	margin-bottom: 2vmin;
+}
+
+.resultmode_confirm_btn:disabled {
+	background: #333;
+	color: #666;
+	cursor: not-allowed;
+}
+
+.resultmode_confirm_btn:not(:disabled):hover {
+	background: #66bb6a;
+}
+
+.resultmode_court_label {
+	position: fixed;
+	top: 3vmin;
+	left: 3vmin;
+	font-size: 3vmin;
+	color: #888;
+	z-index: 510;
+	pointer-events: none;
+}
+
+.resultmode_match_id_label {
+	position: fixed;
+	bottom: 3vmin;
+	left: 3vmin;
+	font-size: 2.5vmin;
+	color: #666;
+	z-index: 510;
+	pointer-events: none;
+}
+
+.resultmode_settings_btn {
+	position: fixed;
+	bottom: 3vmin;
+	right: 3vmin;
+	width: 10vmin;
+	height: 10vmin;
+	min-width: 40px;
+	min-height: 40px;
+	font-size: 5vmin;
+	line-height: 1;
+	background: rgba(30, 30, 50, 0.85);
+	color: #888;
+	border: 1px solid #444;
+	border-radius: 50%;
+	cursor: pointer;
+	z-index: 510;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+}
+
+.resultmode_settings_btn:hover {
+	background: rgba(50, 50, 80, 0.95);
+	color: #ccc;
+}
+
+/* Confirmation dialog overlay */
+.resultmode_confirm_dialog {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.7);
+	z-index: 600;
+	justify-content: center;
+	align-items: center;
+}
+
+.resultmode_confirm_dialog_inner {
+	background: #16213e;
+	border: 2px solid #4caf50;
+	border-radius: 2vmin;
+	padding: 5vmin;
+	max-width: 90vw;
+	text-align: center;
+	color: #eee;
+}
+
+.resultmode_confirm_dialog_title {
+	font-size: 4vmin;
+	font-weight: bold;
+	margin-bottom: 3vmin;
+}
+
+.resultmode_confirm_msg {
+	font-size: 4.5vmin;
+	font-weight: bold;
+	color: #4caf50;
+	margin-bottom: 4vmin;
+}
+
+.resultmode_confirm_dialog_buttons {
+	display: flex;
+	gap: 3vmin;
+	justify-content: center;
+}
+
+.resultmode_confirm_ok {
+	padding: 2vmin 5vmin;
+	font-size: 3.5vmin;
+	background: #4caf50;
+	color: #fff;
+	border: none;
+	border-radius: 1vmin;
+	cursor: pointer;
+}
+
+.resultmode_confirm_ok:hover {
+	background: #66bb6a;
+}
+
+.resultmode_confirm_cancel {
+	padding: 2vmin 5vmin;
+	font-size: 3.5vmin;
+	background: transparent;
+	color: #aaa;
+	border: 1px solid #555;
+	border-radius: 1vmin;
+	cursor: pointer;
+}
+
+.resultmode_confirm_cancel:hover {
+	background: #333;
+}
+
+
+@media screen and (max-width: 480px), screen and (max-height: 480px) {
+	.resultmode_team {
+		font-size: 5vmin;
+	}
+	.resultmode_score_input {
+		width: 14vmin;
+		font-size: 7vmin;
+	}
+}

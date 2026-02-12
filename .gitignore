@@ -10,3 +10,4 @@ mail.*
 
 
 /vendor/
+.DS_Store
