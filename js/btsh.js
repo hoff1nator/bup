@@ -134,11 +134,11 @@ function btsh(baseurl, tournament_key) {
 	}
 
 	async function persist_display_settings() {
-		ws_send({ type: 'persist_display_settings', tournament_key: tournament_key, panel_settings: state.settings });
+		ws_send({ type: 'persist_display_settings', tournament_key: tournament_key, panel_settings: _panel_settings_payload() });
 	}
 
 	async function reset_display_settings() {
-		ws_send({ type: 'reset_display_settings', tournament_key: tournament_key, panel_settings: state.settings });
+		ws_send({ type: 'reset_display_settings', tournament_key: tournament_key, panel_settings: _panel_settings_payload() });
 	}
 
 	async function send_device_info() {
@@ -152,6 +152,12 @@ function btsh(baseurl, tournament_key) {
 
 	async function send_command_done(command) {
 		ws_send({ type: 'command_done', tournament_key: tournament_key, wait_for_command: command})
+	}
+
+	function _panel_settings_payload() {
+		return Object.assign({}, state.settings, {
+			devicemode: settings.get_mode(state) === 'display' ? 'display' : 'umpire',
+		});
 	}
 
 	function confirm_match_finished() {		
@@ -366,7 +372,7 @@ function btsh(baseurl, tournament_key) {
 		} else {
 			state.settings.court_id = state.settings.displaymode_court_id;
 		}
-		ws.sendmsg({ type: 'init', initialize_display: !display_initialized, tournament_key: tournament_key, panel_settings: state.settings });
+				ws.sendmsg({ type: 'init', initialize_display: !display_initialized, tournament_key: tournament_key, panel_settings: _panel_settings_payload() });
 		display_initialized = true;
 	}
 	
@@ -411,6 +417,7 @@ if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var eventutils = require('./eventutils');
 	var network = require('./network');
 	var refmode_client_ui = require('./refmode_client_ui');
+	var settings = require('./settings');
 	var click = require('./click');
 
 	module.exports = btsh;

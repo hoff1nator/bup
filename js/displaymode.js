@@ -4568,7 +4568,7 @@ function ui_init(s, hash_query) {
 		advance_style(s, 1);
 	});
 
-	if (hash_query.neversettings === undefined) {
+	if ((hash_query.neversettings === undefined) && !(s && s.settings && s.settings.neversettings)) {
 		click.qs('.displaymode_layout', function() {
 			settings.show_displaymode();
 		});

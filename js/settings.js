@@ -46,6 +46,7 @@ var default_settings = {
 	dads_atime: 10000,
 	dads_utime: '14:00',
 	dads_mode: 'none',
+	neversettings: false,
 	double_click_timeout: 1000,
 	button_block_timeout: 1200,
 	negative_timers: false,
@@ -99,6 +100,9 @@ function autohide_restart() {
 }
 
 function show_displaymode() {
+	if (state && state.settings && state.settings.neversettings) {
+		return;
+	}
 	if (state.ui.displaymode_settings_visible) {
 		return;
 	}
@@ -144,6 +148,9 @@ function hide_refereemode() {
 
 var _network_hide_cb = null;
 function show() {
+	if (state && state.settings && state.settings.neversettings) {
+		return;
+	}
 	if (state.ui.settings_visible) {
 		return;
 	}
