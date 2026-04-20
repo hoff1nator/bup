@@ -7,6 +7,7 @@ function btsh(baseurl, tournament_key) {
 	var reconnect_timeout = 1000;
 	var bts_update_callback = null;
 	var bts_update_courts_callback = null;
+	var btsh_court_selection_pending = null;
 	var display_initialized = false;
 	var battery;
 	
@@ -114,6 +115,81 @@ function btsh(baseurl, tournament_key) {
 		}
 	}
 
+	function _court_picker_is_visible() {
+		return (
+			state &&
+			settings.get_mode(state) === 'umpire' &&
+			(!state.settings.court_id || state.settings.court_id === 'referee')
+		);
+	}
+
+	function _filter_event_to_assigned_court(event) {
+		if (!event || !state || !state.settings) {
+			return event;
+		}
+		var assigned_court_id = state.settings.court_id;
+		if (!assigned_court_id || assigned_court_id === 'referee') {
+			return event;
+		}
+		if (!event.matches || !Array.isArray(event.matches)) {
+			return event;
+		}
+		event.matches = event.matches.filter(function(match) {
+			return match && match.setup && match.setup.court_id === assigned_court_id;
+		});
+		return event;
+	}
+
+	function _court_picker_match(court) {
+		if (!court || !court.match_id || !state || !state.bts_event || !state.bts_event.matches) {
+			return null;
+		}
+		return state.bts_event.matches.find(function(match) {
+			return match && match.setup && (match.setup.match_id === court.match_id);
+		}) || null;
+	}
+
+	function _court_picker_team_text(match, team_id) {
+		var team = match && match.setup && match.setup.teams ? match.setup.teams[team_id] : null;
+		if (!team || !team.players || team.players.length === 0) {
+			return 'N.N.';
+		}
+		if (!match.setup.is_doubles) {
+			return team.players[0].name || 'N.N.';
+		}
+		if (team.players.length === 1) {
+			return (team.players[0].name || 'N.N.') + ' / N.N.';
+		}
+		return (team.players[0].name || 'N.N.') + ' / ' + (team.players[1].name || 'N.N.');
+	}
+
+	function _court_picker_set_visible(container, visible) {
+		if (!container) {
+			return;
+		}
+		if (visible) {
+			container.classList.remove('default-invisible');
+			container.style.display = '';
+		} else {
+			container.classList.add('default-invisible');
+			container.style.display = 'none';
+		}
+	}
+
+	function _render_court_picker() {
+		var container = document.querySelector('.btsh_court_picker');
+		_court_picker_set_visible(container, false);
+	}
+
+	function select_court_assignment(court_id) {
+		btsh_court_selection_pending = court_id;
+		ws_send({
+			type: 'select_court_assignment',
+			tournament_key: tournament_key,
+			court_id: court_id,
+		});
+	}
+
 	function ui_init() {
 		if (!baseurl) {
 			baseurl = '../';
@@ -131,6 +207,7 @@ function btsh(baseurl, tournament_key) {
 			e.preventDefault();
 			reset_display_settings();
 		});
+		_render_court_picker();
 	}
 
 	async function persist_display_settings() {
@@ -270,10 +347,11 @@ function btsh(baseurl, tournament_key) {
 	function default_change_handler(c) {
 		switch (c.ctype) {
 			case 'score-update':
+				state.bts_event = _filter_event_to_assigned_court(c.val.event);
 				console.log('[bup] score-update received', {
 					ts: Date.now(),
 					court_id: state && state.settings ? state.settings.court_id : null,
-					match_states: c.val && c.val.event && c.val.event.matches ? c.val.event.matches.map(function(match) {
+					match_states: state && state.bts_event && state.bts_event.matches ? state.bts_event.matches.map(function(match) {
 						return {
 							match_id: match && match.setup ? match.setup.match_id : null,
 							state: match && match.setup ? match.setup.state : null,
@@ -284,31 +362,32 @@ function btsh(baseurl, tournament_key) {
 					}) : [],
 				});
 				if (bts_update_callback != null) {
-					bts_update_callback(null, state, c.val.event);
+					bts_update_callback(null, state, state.bts_event);
 					if (
 						state.settings.court_id != '' &&
-						c.val.event.matches[0] &&
-						c.val.event.matches[0].end_ts != null
+						state.bts_event.matches[0] &&
+						state.bts_event.matches[0].end_ts != null
 					) {
 						console.log('[bup] score-update scheduling reload_match_information', {
 							ts: Date.now(),
 							court_id: state && state.settings ? state.settings.court_id : null,
-							first_match_id: c.val.event.matches[0] && c.val.event.matches[0].setup ? c.val.event.matches[0].setup.match_id : null,
-							first_match_end_ts: c.val.event.matches[0] ? c.val.event.matches[0].end_ts : null,
+							first_match_id: state.bts_event.matches[0] && state.bts_event.matches[0].setup ? state.bts_event.matches[0].setup.match_id : null,
+							first_match_end_ts: state.bts_event.matches[0] ? state.bts_event.matches[0].end_ts : null,
 						});
 						setTimeout(reload_match_information, 60000);
 					}
-				} else {
-					if (state && state != null) {
-						state.bts_event = c.val.event;
-					}
 				}
+				_render_court_picker();
 				break;
 			case 'settings-update':
 				state.settings = c.val;
 				state.dads = c.val.advertisements;
+				if (state.settings && state.settings.court_id && state.settings.court_id !== 'referee') {
+					btsh_court_selection_pending = null;
+				}
 				settings.update(state);
 				settings.on_mode_change(state);
+				_render_court_picker();
 				break;
 			case 'confirm-match-finished':
 				confirm_match_finished();
@@ -353,6 +432,7 @@ function btsh(baseurl, tournament_key) {
 				} else {
 					settings.hide_displaymode();
 				}
+				_render_court_picker();
 				break;
 			default:
 				break;
@@ -361,18 +441,7 @@ function btsh(baseurl, tournament_key) {
 	}
 
 	function reload_match_information() {
-		if (state.ui.displaymode_visible) {
-			var style = state.settings.displaymode_style;
-			if (displaymode.option_applies(style, 'court_id') && (style != '2court')) {
-				state.settings.court_id = state.settings.displaymode_court_id;
-			} else {
-				state.settings.court_id = ''
-			}
-
-		} else {
-			state.settings.court_id = state.settings.displaymode_court_id;
-		}
-				ws.sendmsg({ type: 'init', initialize_display: !display_initialized, tournament_key: tournament_key, panel_settings: _panel_settings_payload() });
+		ws.sendmsg({ type: 'init', initialize_display: !display_initialized, tournament_key: tournament_key, panel_settings: _panel_settings_payload() });
 		display_initialized = true;
 	}
 	
@@ -405,6 +474,7 @@ function btsh(baseurl, tournament_key) {
 		editable: editable,
 		limited_ui: true,
 		push_service: true,
+		select_court_assignment: select_court_assignment,
 		subscribe: subscribe,
 		reload_match_information: reload_match_information,
 	};

@@ -131,6 +131,61 @@
 	border-top-right-radius: 4vmin;
 }
 
+.display_unassigned {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	grid-template-rows: auto 1fr auto 1fr;
+	align-items: center;
+	justify-items: center;
+	gap: 1.5vmin;
+	padding: 2.5vmin 3vmin;
+	background: #fff;
+	color: #111;
+	text-align: center;
+}
+
+.display_unassigned_label {
+	font-size: 6.4vmin;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: #666;
+}
+
+.display_unassigned_hostname_label,
+.display_unassigned_monitor_label {
+	transform: none;
+}
+
+.display_unassigned_hostname {
+	width: 100%;
+	font-size: 20vh;
+	line-height: 0.95;
+	font-weight: 700;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 0;
+	overflow-wrap: anywhere;
+	transform: translateY(-3vh);
+}
+
+.display_unassigned_monitor_label {
+	transform: translateY(-5vh);
+}
+
+.display_unassigned_monitor {
+	width: 100%;
+	font-size: 55vh;
+	line-height: 0.9;
+	font-weight: 800;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 0;
+}
+
 .d_international_team,
 .d_tournament,
 .d_clean_team {

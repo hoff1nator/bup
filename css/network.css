@@ -189,3 +189,104 @@ button > .loading-icon {
 .setup_network_status > div {
 	display: inline-block;
 }
+
+.btsh_court_select_tile {
+	display: inline-flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	width: 18em;
+	height: 10em;
+	box-sizing: border-box;
+	vertical-align: top;
+}
+
+.btsh_court_select_title {
+	flex: 0 0 auto;
+}
+
+.btsh_court_select_body {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.btsh_court_picker {
+	margin: 1em 0 1.5em 0;
+}
+
+.btsh_court_picker_heading {
+	font-weight: bold;
+	font-size: 120%;
+	margin-bottom: 0.35em;
+}
+
+.btsh_court_picker_hint {
+	color: #666;
+	margin-bottom: 0.8em;
+}
+
+.btsh_court_picker_tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(15em, 1fr));
+	gap: 0.8em;
+	align-items: stretch;
+}
+
+.btsh_court_picker_tile {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	width: 100%;
+	min-height: 8.5em;
+	box-sizing: border-box;
+	padding: 0.9em 1em;
+	border: 1px solid #cfcfcf;
+	border-radius: 0.9em;
+	background: linear-gradient(180deg, #ffffff 0%, #f6f8fb 100%);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+	text-align: left;
+}
+
+.btsh_court_picker_tile[disabled] {
+	opacity: 0.6;
+}
+
+.btsh_court_picker_tile_court {
+	display: block;
+	font-size: 135%;
+	font-weight: bold;
+	margin-bottom: 0.35em;
+}
+
+.btsh_court_picker_tile_body {
+	flex: 1 1 auto;
+	min-height: 4.8em;
+}
+
+.btsh_court_picker_tile_match,
+.btsh_court_picker_tile_players,
+.btsh_court_picker_tile_score {
+	display: block;
+}
+
+.btsh_court_picker_tile_match {
+	font-weight: bold;
+}
+
+.btsh_court_picker_tile_players {
+	color: #444;
+	margin-top: 0.2em;
+}
+
+.btsh_court_picker_tile_score {
+	color: #7d0e0e;
+	font-weight: bold;
+	margin-top: 0.4em;
+}
+
+.btsh_court_picker_empty {
+	color: #666;
+	font-style: italic;
+	padding: 0.8em 0;
+}

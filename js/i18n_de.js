@@ -244,6 +244,8 @@ var i18n_de = {
 'settings:Court Description.placeholder': 'z.B. rechts',
 'settings:Court Number': 'Nummer',
 'settings:Select Court': 'Feld:',
+'settings:Select Court by Tile': 'Dieses Tablet ist noch keinem Feld zugewiesen. Wähle hier das passende Feld aus.',
+'settings:No Current Match': 'Kein aktuelles Spiel',
 'settings:Umpire': 'Schiedsrichter',
 'settings:Service judge': 'Aufschlagrichter',
 'settings:Language': 'Sprache',

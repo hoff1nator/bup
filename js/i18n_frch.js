@@ -233,6 +233,8 @@ var i18n_frch = {
 'settings:Court Description.placeholder': 'par example droite',
 'settings:Court Number': 'Nombre',
 'settings:Select Court': 'Court:',
+'settings:Select Court by Tile': 'Cette tablette n’est pas encore attribuée à un terrain. Choisissez ici le terrain approprié.',
+'settings:No Current Match': 'Pas de match en cours',
 'settings:Umpire': 'Arbitre',
 'settings:Service judge': 'Juge de service',
 'settings:Language': 'Langue',

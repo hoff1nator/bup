@@ -3587,6 +3587,21 @@ function _render_court(s, container, event) {
 	return court;
 }
 
+function _is_unassigned_display(s) {
+	return !s.settings.court_id && s.settings.devicemode === 'display';
+}
+
+function _render_unassigned_display(s, container) {
+	var hostname = s.settings.hostname || window.location.hostname || '';
+	var monitor_label = s.settings.monitor_label || s.settings.client_id || '';
+	var card = uiu.el(container, 'div', 'display_unassigned');
+
+	uiu.el(card, 'div', 'display_unassigned_label display_unassigned_hostname_label', 'Hostname');
+	uiu.el(card, 'div', 'display_unassigned_hostname', hostname || 'Unbekannt');
+	uiu.el(card, 'div', 'display_unassigned_label display_unassigned_monitor_label', 'Monitor');
+	uiu.el(card, 'div', 'display_unassigned_monitor', monitor_label || '-');
+}
+
 function _player_names(team, is_doubles, doubles_func) {
 	var pcount = is_doubles ? 2 : 1;
 	var player_names = team.players.map(function(player) {
@@ -4301,6 +4316,12 @@ function update(err, s, event) {
 	ALL_STYLES.forEach(function(astyle) {
 		((astyle === style) ? uiu.addClass : uiu.removeClass)(container, 'd_layout_' + astyle);
 	});
+
+	if (_is_unassigned_display(s)) {
+		dads.d_onmatchchange(s, ads_container, false);
+		_render_unassigned_display(s, container);
+		return;
+	}
 
 	if (! event.courts) {
 		return;

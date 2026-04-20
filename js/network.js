@@ -247,9 +247,100 @@ function _short_court_id(court_id) {
 	}
 }
 
+function _find_match_for_court(event, court) {
+	if (!event || !event.matches || !court || !court.match_id) {
+		return null;
+	}
+	return utils.find(event.matches, function(match) {
+		return match && match.setup && match.setup.match_id === court.match_id;
+	}) || null;
+}
+
+function _btsh_unassigned_court_picker_enabled(s, netw) {
+	return !!(
+		netw &&
+		netw.push_service &&
+		typeof netw.select_court_assignment === 'function' &&
+		s &&
+		s.settings &&
+		(!s.settings.court_id || s.settings.court_id === 'referee')
+	);
+}
+
+function _btsh_players_str(match, team_id) {
+	var team = match && match.setup && match.setup.teams ? match.setup.teams[team_id] : null;
+	if (!team || !team.players || team.players.length === 0) {
+		return '';
+	}
+	if (!match.setup.is_doubles) {
+		return team.players[0].name || '';
+	}
+	if (team.players.length === 1) {
+		return (team.players[0].name || '') + ' / N.N.';
+	}
+	return (team.players[0].name || '') + ' / ' + (team.players[1].name || '');
+}
+
+function _render_btsh_unassigned_court_picker(s, event, container, netw) {
+	uiu.empty(container);
+	uiu.text_qs('.setup_network_event', s._('settings:Select Court'));
+
+	var courts = (event && event.courts ? event.courts.slice() : []).filter(function(court) {
+		return court && court.court_id;
+	});
+	courts.sort(function(a, b) {
+		var a_label = Number(a.label);
+		var b_label = Number(b.label);
+		if (Number.isFinite(a_label) && Number.isFinite(b_label) && a_label !== b_label) {
+			return a_label - b_label;
+		}
+		return String(a.label || a.court_id).localeCompare(String(b.label || b.court_id));
+	});
+
+	courts.forEach(function(court) {
+		var match = _find_match_for_court(event, court);
+		var btn = uiu.el(container, 'button', {
+			'class': 'setup_network_match btsh_court_select_tile',
+			'type': 'button',
+		});
+
+		uiu.el(btn, 'span', {
+			'class': 'setup_network_match_match_name btsh_court_select_title',
+		}, s._('Court') + ' ' + (court.label || _short_court_id(court.court_id) || court.court_id) + ':');
+
+		var body = uiu.el(btn, 'div', 'btsh_court_select_body');
+		if (match) {
+			uiu.el(body, 'span', {
+				'class': 'setup_network_match_match_name',
+			}, [match.setup.event_name, match.setup.match_name].filter(Boolean).join(' '));
+
+			uiu.el(body, 'span', {
+				'class': 'setup_network_match_home_players',
+			}, _btsh_players_str(match, 0));
+			uiu.el(body, 'span', {
+				'class': 'setup_network_match_away_players',
+			}, _btsh_players_str(match, 1));
+
+			var score_text = _score_text(match.network_score);
+			uiu.el(body, 'span', {
+				'class': 'setup_network_match_score',
+			}, score_text ? score_text : '\xA0');
+		}
+
+		click.on(btn, function() {
+			netw.select_court_assignment(court.court_id);
+		});
+	});
+}
+
 function ui_render_matchlist(s, event) {
 	var container = uiu.qs('#setup_network_matches');
 	uiu.empty(container); // TODO better transition if we're updating?
+	var netw = get_netw();
+
+	if (_btsh_unassigned_court_picker_enabled(s, netw)) {
+		return _render_btsh_unassigned_court_picker(s, event, container, netw);
+	}
 
 	var top_label = event.event_name;
 	if (!top_label) {

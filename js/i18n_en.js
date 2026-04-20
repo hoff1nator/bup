@@ -242,6 +242,8 @@ var i18n_en = {
 'settings:Court Description.placeholder': 'e.g. right',
 'settings:Court Number': 'Number',
 'settings:Select Court': 'Court:',
+'settings:Select Court by Tile': 'This tablet is not assigned to a court yet. Choose the correct court here.',
+'settings:No Current Match': 'No current match',
 'settings:Umpire': 'Umpire',
 'settings:Service judge': 'Service judge',
 'settings:Language': 'Language',

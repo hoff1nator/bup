@@ -116,6 +116,8 @@ var i18n_nlbe = {
 
 'settings:Language': 'Taal',
 'settings:Settings': 'Instellingen',
+'settings:Select Court by Tile': 'Deze tablet is nog niet aan een terrein gekoppeld. Kies hier het juiste terrein.',
+'settings:No Current Match': 'Geen actuele wedstrijd',
 };
 
 /*@DEV*/
