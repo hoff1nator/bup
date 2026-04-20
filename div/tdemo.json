@@ -15,25 +15,39 @@
           "team_competition": false,
           "match_name": "Finale",
           "event_name": "MX O55 (Demo)",
-          "umpire_name": "Rita Richter",
+          "umpire_name": "Ulli Unparteiisch",
           "teams": [
             {
+              "name": "TV Musterstadt",
               "players": [
                 {
-                  "name": "Stefan Frey"
+                  "name": "Max Emil Mustermann",
+                  "firstname": "Max",
+                  "middlename": "Emil",
+                  "lastname": "Mustermann"
                 },
                 {
-                  "name": "Heidi Bender"
+                  "name": "Lena Beispiel",
+                  "firstname": "Lena",
+                  "middlename": "",
+                  "lastname": "Beispiel"
                 }
               ]
             },
             {
+              "name": "BC Beispielheim",
               "players": [
                 {
-                  "name": "Thomas Bunn"
+                  "name": "Timo Testfeld",
+                  "firstname": "Timo",
+                  "middlename": "",
+                  "lastname": "Testfeld"
                 },
                 {
-                  "name": "Heike Bunn"
+                  "name": "Mia Sophie Demo",
+                  "firstname": "Mia",
+                  "middlename": "Sophie",
+                  "lastname": "Demo"
                 }
               ]
             }
