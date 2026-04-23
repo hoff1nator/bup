@@ -156,6 +156,40 @@ function install_destructor(s, destructor) {
 	s.destructors.push(destructor);
 }
 
+function _scorecard_visible_set_count() {
+	if (!state || !state.match) {
+		return 0;
+	}
+	return (
+		((state.match.finished_games && state.match.finished_games.length) || 0) +
+		((state.match.finished && !state.match.finish_confirmed) ? 1 : 0)
+	);
+}
+
+function _scorecard_undo_last_set() {
+	var before_visible_set_count = _scorecard_visible_set_count();
+	var min_visible_set_count = Math.max(0, before_visible_set_count - 1);
+	var max_steps = 4;
+
+	for (var i = 0; i < max_steps && state.undo_possible; i++) {
+		on_press({
+			type: 'undo',
+		});
+
+		if (_scorecard_visible_set_count() <= min_visible_set_count) {
+			break;
+		}
+	}
+}
+
+function _scorecard_can_undo_visible_state() {
+	return !!(
+		state &&
+		state.match &&
+		(_scorecard_visible_set_count() > 0)
+	);
+}
+
 function uninstall_destructor(s, destructor) {
 	if (! s.destructors) {
 		// Already fired
@@ -282,6 +316,19 @@ function ui_init() {
 		});
 	});
 	click.qs('#button_undo', function() {
+		if (scorecard.is_active(state)) {
+			if (_scorecard_can_undo_visible_state()) {
+				_scorecard_undo_last_set();
+				return;
+			}
+
+			if (state.ui.scorecard_editor_visible) {
+				state.ui.scorecard_editor_visible = false;
+				render.ui_render(state);
+			}
+			return;
+		}
+
 		on_press({
 			type: 'undo',
 		});

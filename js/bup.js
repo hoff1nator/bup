@@ -35,6 +35,7 @@ function ui_init() {
 	scoresheet.ui_init();
 	timer.ui_init();
 	control.ui_init();
+	scorecard.ui_init();
 	startmatch.ui_init();
 	settings.ui_init(state);
 	eventsheet.ui_init();
@@ -112,6 +113,7 @@ if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var register_sworker = require('./register_sworker');
 	var report_problem = require('./report_problem');
 	var scoresheet = require('./scoresheet');
+	var scorecard = require('./scorecard');
 	var settings = require('./settings');
 	var setupsheet = require('./setupsheet');
 	var shortcuts = require('./shortcuts');

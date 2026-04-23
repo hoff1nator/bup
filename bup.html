@@ -15,6 +15,7 @@
 	<link rel="stylesheet" href="css/scoresheet.css" />
 	<link rel="stylesheet" href="css/court.css" />
 	<link rel="stylesheet" href="css/score.css" />
+	<link rel="stylesheet" href="css/scorecard.css" />
 	<link rel="stylesheet" href="css/timer.css" />
 	<link rel="stylesheet" href="css/network.css" />
 	<link rel="stylesheet" href="css/login.css" />
@@ -76,6 +77,68 @@
 </div>
 
 <div id="court">
+</div>
+
+<div class="scorecard_container default-invisible">
+	<div class="scorecard_header">
+		<div class="scorecard_header_main">
+			<div class="scorecard_title" data-i18n="scorecard:title"></div>
+			<div class="scorecard_match"></div>
+			<div class="scorecard_meta scorecard_meta_main">
+				<div class="scorecard_meta_item"><span class="scorecard_meta_label" data-i18n="scorecard:meta:competition"></span><span class="scorecard_meta_value scorecard_meta_competition"></span></div>
+				<div class="scorecard_meta_item"><span class="scorecard_meta_label" data-i18n="scorecard:meta:round"></span><span class="scorecard_meta_value scorecard_meta_round"></span></div>
+				<div class="scorecard_meta_item"><span class="scorecard_meta_label" data-i18n="scorecard:meta:court"></span><span class="scorecard_meta_value scorecard_meta_court"></span></div>
+				<div class="scorecard_meta_item"><span class="scorecard_meta_label" data-i18n="scorecard:meta:date"></span><span class="scorecard_meta_value scorecard_meta_date"></span></div>
+				<div class="scorecard_meta_item"><span class="scorecard_meta_label" data-i18n="scorecard:meta:time"></span><span class="scorecard_meta_value scorecard_meta_time"></span></div>
+				<div class="scorecard_meta_item"><span class="scorecard_meta_label" data-i18n="scorecard:meta:called"></span><span class="scorecard_meta_value scorecard_meta_called"></span></div>
+			</div>
+		</div>
+		<div class="scorecard_meta scorecard_meta_side">
+			<div class="scorecard_meta_item"><span class="scorecard_meta_label" data-i18n="scorecard:meta:umpire"></span><span class="scorecard_meta_value scorecard_meta_umpire"></span></div>
+			<div class="scorecard_meta_item"><span class="scorecard_meta_label" data-i18n="scorecard:meta:service_judge"></span><span class="scorecard_meta_value scorecard_meta_service_judge"></span></div>
+			<div class="scorecard_meta_item"><span class="scorecard_meta_label" data-i18n="scorecard:meta:tabletoperator"></span><span class="scorecard_meta_value scorecard_meta_tabletoperator"></span></div>
+			<div class="scorecard_meta_item"><span class="scorecard_meta_label" data-i18n="scorecard:meta:end"></span><span class="scorecard_meta_value scorecard_meta_end"></span></div>
+		</div>
+	</div>
+	<div class="scorecard_scoresheet_head">
+		<div class="scorecard_team_button scorecard_sheet_team" data-team-id="0">
+			<div class="scorecard_sheet_rows">
+				<div class="scorecard_sheet_row scorecard_team0_player1"></div>
+				<div class="scorecard_sheet_row scorecard_team0_player2"></div>
+				<div class="scorecard_sheet_row scorecard_team0_footer"></div>
+			</div>
+		</div>
+		<div class="scorecard_sheet_result">
+			<div class="scorecard_sheet_result_title" data-i18n="scorecard:result_title"></div>
+			<div class="scorecard_sheet_result_rows"></div>
+		</div>
+		<div class="scorecard_team_button scorecard_sheet_team" data-team-id="1">
+			<div class="scorecard_sheet_rows">
+				<div class="scorecard_sheet_row scorecard_team1_player1"></div>
+				<div class="scorecard_sheet_row scorecard_team1_player2"></div>
+				<div class="scorecard_sheet_row scorecard_team1_footer"></div>
+			</div>
+		</div>
+	</div>
+	<div class="scorecard_editor">
+		<div class="scorecard_set_heading"></div>
+		<div class="scorecard_winner_label" data-i18n="scorecard:winner"></div>
+		<div class="scorecard_winner_buttons">
+			<button type="button" class="scorecard_winner_button" data-team-id="0"></button>
+			<button type="button" class="scorecard_winner_button" data-team-id="1"></button>
+		</div>
+		<label class="scorecard_loser_points_label">
+			<span data-i18n="scorecard:loser_points"></span>
+			<div class="scorecard_loser_points_value">0</div>
+			<input type="range" class="scorecard_loser_points" min="0" max="99" value="0" />
+		</label>
+		<div class="scorecard_actions">
+			<button type="button" class="scorecard_cancel" data-i18n="scorecard:cancel"></button>
+			<button type="button" class="scorecard_apply" data-i18n="scorecard:apply"></button>
+			<button type="button" class="scorecard_leave" data-i18n="scorecard:leave"></button>
+		</div>
+		<div class="scorecard_status"></div>
+	</div>
 </div>
 
 <div class="network_desync_container default-invisible">
@@ -378,6 +441,7 @@
 <label data-bup-modes="umpire"><input type="checkbox" name="negative_timers" /><span data-i18n="settings:Negative Timers"></span></label>
 <label data-bup-modes="umpire"><input type="checkbox" name="editmode_doubleclick" /><span data-i18n="settings:editmode doubleclick"></span></label>
 <label data-bup-modes="umpire"><span data-i18n="settings:click_mode"></span>: <select name="click_mode" size="1"><option data-i18n="settings:click_mode:auto" value="auto"></option><option data-i18n="settings:click_mode:click" value="click"></option><option data-i18n="settings:click_mode:touchstart" value="touchstart"></option><option data-i18n="settings:click_mode:touchend" value="touchend"></option></select></label>
+<label data-bup-modes="umpire"><span data-i18n="settings:tablet_mode"></span>: <select name="tablet_mode" size="1"><option data-i18n="settings:tablet_mode:umpire" value="umpire"></option><option data-i18n="settings:tablet_mode:scorecard" value="scorecard"></option></select></label>
 <label data-bup-modes="umpire"><span data-i18n="settings:Button Block Timeout"></span>: <input type="number" name="button_block_timeout" min="0" value="1500" max="5000" /></label>
 <label data-bup-modes="umpire display referee"><span data-i18n="settings:Network Timeout"></span>: <input type="number" name="network_timeout" min="1" value="1000" max="600000" /></label>
 <label data-bup-modes="umpire"><span data-i18n="settings:Network Repeat Interval"></span>: <input type="number" name="network_update_interval" min="1" value="10000" max="600000" /></label>
@@ -687,6 +751,7 @@ text.team1 {
 <script src="js/render.js"></script>
 <script src="js/report_problem.js"></script>
 <script src="js/save_file.js"></script>
+<script src="js/scorecard.js"></script>
 <script src="js/scoresheet.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/setupsheet.js"></script>

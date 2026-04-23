@@ -63,6 +63,7 @@ var default_settings = {
 	refmode_client_node_name: '',
 	referee_service_judges: false,
 	style: 'default',
+	tablet_mode: 'umpire',
 };
 
 function load() {
@@ -75,6 +76,9 @@ function load() {
 	if (json_str) {
 		var new_settings = JSON.parse(json_str);
 		utils.obj_update(res, new_settings);
+	}
+	if ((res.tablet_mode !== 'umpire') && (res.tablet_mode !== 'scorecard')) {
+		res.tablet_mode = 'umpire';
 	}
 	return res;
 }
@@ -214,6 +218,26 @@ function update_refclient(s) {
 	refmode_client_ui.on_settings_change(s);
 }
 
+function _update_tablet_mode_ui(s) {
+	var is_scorecard = !!(s && s.settings && s.settings.tablet_mode === 'scorecard');
+	[
+		'shuttle_counter',
+		'negative_timers',
+		'editmode_doubleclick',
+		'show_announcements',
+	].forEach(function(name) {
+		var field = document.querySelector('.settings [name="' + name + '"]');
+		if (!field || !field.closest) {
+			return;
+		}
+		var container = field.closest('label');
+		if (!container) {
+			return;
+		}
+		uiu.visible(container, !is_scorecard);
+	});
+}
+
 var _settings_checkboxes = [
 	'negative_timers',
 	'shuttle_counter',
@@ -278,6 +302,7 @@ var _settings_selects = [
 	'wakelock',
 	'dads_mode',
 	'style',
+	'tablet_mode',
 ];
 
 function update_court_settings(s) {
@@ -324,6 +349,8 @@ function update(s) {
 	render.shuttle_counter(s);
 	click.update_mode(s.settings.click_mode);
 	update_refclient(s);
+	_update_tablet_mode_ui(s);
+	scorecard.update_settings_ui(s);
 }
 
 function change(s, key, value) {
@@ -405,7 +432,11 @@ function on_change(s, name) {
 		fullscreen.update_fullscreen_button();
 		break;
 	case 'style':
+	case 'tablet_mode':
+		scorecard.on_settings_change(s);
 		on_mode_change(s);
+		render.show();
+		render.ui_render(s);
 		break;
 	}
 }
@@ -607,6 +638,7 @@ if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var uiu = require('./uiu');
 	var utils = require('./utils');
 	var wakelock = require('./wakelock');
+	var scorecard = require('./scorecard');
 
 	module.exports = settings;
 }

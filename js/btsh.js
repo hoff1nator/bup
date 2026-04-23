@@ -380,13 +380,48 @@ function btsh(baseurl, tournament_key) {
 				_render_court_picker();
 				break;
 			case 'settings-update':
-				state.settings = c.val;
-				state.dads = c.val.advertisements;
+				var previous_settings = state.settings || settings.load();
+				var next_settings = utils.deep_copy(settings.default_settings);
+				utils.obj_update(next_settings, previous_settings);
+				if (c.val) {
+					utils.obj_update(next_settings, c.val);
+				}
+				if (
+					(!c.val || !Object.prototype.hasOwnProperty.call(c.val, 'tablet_mode'))
+					&& previous_settings
+					&& previous_settings.tablet_mode
+				) {
+					next_settings.tablet_mode = previous_settings.tablet_mode;
+				}
+				if ((next_settings.tablet_mode !== 'umpire') && (next_settings.tablet_mode !== 'scorecard')) {
+					next_settings.tablet_mode = 'umpire';
+				}
+				var had_assigned_court = !!(
+					previous_settings &&
+					previous_settings.court_id &&
+					previous_settings.court_id !== 'referee'
+				);
+				var lost_assigned_court = (
+					had_assigned_court &&
+					(!next_settings.court_id || next_settings.court_id === 'referee')
+				);
+				state.settings = next_settings;
+				state.dads = (c.val && c.val.advertisements) ? c.val.advertisements : [];
 				if (state.settings && state.settings.court_id && state.settings.court_id !== 'referee') {
 					btsh_court_selection_pending = null;
 				}
 				settings.update(state);
 				settings.on_mode_change(state);
+				if (
+					lost_assigned_court &&
+					settings.get_mode(state) === 'umpire'
+				) {
+					if (state.ui) {
+						state.ui.scorecard_editor_visible = false;
+					}
+					settings.show();
+					settings.on_mode_change(state);
+				}
 				_render_court_picker();
 				break;
 			case 'confirm-match-finished':

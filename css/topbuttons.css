@@ -1,5 +1,6 @@
 .topleft_buttons,
 .topright_buttons {
+	position: relative;
 	z-index: 1000;
 	margin-top: 1vmin;
 	margin-bottom: 4vmin;
@@ -99,4 +100,3 @@
 #button_shuttle > span.button_icon {
 	background-image: url(../icons/shuttle-button.svg);
 }
-

@@ -282,15 +282,69 @@ function ui_court_str(s) {
 
 function ui_render(s) {
 	var dialog_active = false;  // Is there anything to pick in the bottom?
+	var scorecard_active = scorecard.is_active(s);
 
 	if (!s.initialized) {
 		// Nothing to render really
 		return;
 	}
 
+	scorecard.update_settings_ui(s);
+	uiu.setClass_qs('#game', 'scorecard_mode', scorecard_active);
+
+	uiu.$visible_qs('.scorecard_container', scorecard_active);
+	uiu.$visible_qs('#court', !scorecard_active);
+	uiu.$visible_qs('#score', !scorecard_active);
+	uiu.$visible_qs('#left_score', !scorecard_active);
+	uiu.$visible_qs('#right_score', !scorecard_active);
+	if (scorecard_active) {
+		var scorecard_undo_enabled = !!(
+			(s.match && s.match.finished_games && s.match.finished_games.length > 0) ||
+			s.match.finish_confirmed ||
+			(s.ui && s.ui.scorecard_editor_visible)
+		);
+		var scorecard_postmatch_confirm_visible = !!(
+			s.match.finished &&
+			!s.match.finish_confirmed &&
+			!s.match.suspended &&
+			!s.match.injuries
+		);
+		var $scorecard_undo = $('#button_undo');
+		uiu.$visible_qs('#love-all-dialog', false);
+		uiu.$visible_qs('#postmatch-leave-dialog', false);
+		uiu.$visible_qs('#postmatch-confirm-dialog', scorecard_postmatch_confirm_visible);
+		uiu.$visible_qs('#postgame-confirm-dialog', false);
+		uiu.$visible_qs('#postinterval-confirm-dialog', false);
+		uiu.$visible_qs('#suspension-resume-dialog', false);
+		uiu.$visible_qs('#injury-resume-dialog', false);
+		uiu.$visible_qs('#pick_side', false);
+		uiu.$visible_qs('#pick_server', false);
+		uiu.$visible_qs('#pick_receiver', false);
+		uiu.$visible_qs('#pronunciation', false);
+		uiu.visible_qs('.postmatch_options', false);
+		uiu.disabled_qsa('#button_shuttle,#button_exception', true);
+		uiu.disabled_qsa('#button_undo', !scorecard_undo_enabled);
+		if (scorecard_undo_enabled) {
+			$scorecard_undo.removeAttr('disabled');
+			$scorecard_undo.removeAttr('data-render-disabled');
+			$scorecard_undo.removeClass('half-invisible');
+		} else {
+			$scorecard_undo.attr('disabled', 'disabled');
+			$scorecard_undo.attr('data-render-disabled', 'disabled');
+			$scorecard_undo.addClass('half-invisible');
+		}
+		$('#button_redo').toggle(s.redo_possible);
+		if (scorecard_postmatch_confirm_visible) {
+			dialog_active = true;
+			_set_dialog(s, '#postmatch-confirm-dialog');
+		}
+		timer.remove();
+		scorecard.render_ui(s);
+		return;
+	}
+
 	court.render(s, main_court_ui());
 	editmode.update_ui(s);
-
 	uiu.text_qs('#shuttle_counter_value', s.match.shuttle_count);
 
 	uiu.$visible_qs('#love-all-dialog', s.match.announce_pregame && !s.match.injuries && !s.match.suspended);
@@ -495,6 +549,7 @@ if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var court = require('./court');
 	var editmode = require('./editmode');
 	var pronunciation = require('./pronunciation');
+	var scorecard = require('./scorecard');
 	var timer = require('./timer');
 	var uiu = require('./uiu');
 	var utils = require('./utils');
