@@ -145,8 +145,13 @@ function empty(node) {
 }
 
 function remove(node) {
+	if (!node) {
+		return;
+	}
 	empty(node);
-	node.parentNode.removeChild(node);
+	if (node.parentNode) {
+		node.parentNode.removeChild(node);
+	}
 }
 
 function remove_qsa(qs, container) {

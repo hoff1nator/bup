@@ -333,6 +333,26 @@ function _render_btsh_unassigned_court_picker(s, event, container, netw) {
 	});
 }
 
+function _matchlist_title(s, event) {
+	if (event && event.event_name) {
+		return event.event_name;
+	}
+	if (s.settings && s.settings.court_id && s.settings.court_id !== 'referee') {
+		return s._(
+			'network:Matches on court',
+			{court: _short_court_id(s.settings.court_id)});
+	}
+	return s._('network:Matches');
+}
+
+function update_matchlist_title(s, event) {
+	var title = _matchlist_title(s, event);
+	var title_node = document.querySelector('.setup_network_event');
+	if (title_node) {
+		uiu.text(title_node, title);
+	}
+}
+
 function ui_render_matchlist(s, event) {
 	var container = uiu.qs('#setup_network_matches');
 	uiu.empty(container); // TODO better transition if we're updating?
@@ -342,17 +362,7 @@ function ui_render_matchlist(s, event) {
 		return _render_btsh_unassigned_court_picker(s, event, container, netw);
 	}
 
-	var top_label = event.event_name;
-	if (!top_label) {
-		if (s.settings && s.settings.court_id && s.settings.court_id !== 'referee') {
-			top_label = s._(
-				'network:Matches on court',
-				{court: _short_court_id(s.settings.court_id)});
-		} else {
-			top_label = s._('network:Matches');
-		}
-	}
-	uiu.text_qs('.setup_network_event', top_label);
+	update_matchlist_title(s, event);
 
 	event.matches.forEach(function(match) {
 		var btn = uiu.el(container, 'button', {
@@ -502,6 +512,13 @@ function reload_match_information() {
 	var netw = get_netw();
 	if (netw && netw.push_service) {
 		netw.reload_match_information();
+	}
+}
+
+function match_opened(s) {
+	var netw = get_netw();
+	if (netw && netw.push_service && typeof netw.match_opened === 'function') {
+		netw.match_opened(s);
 	}
 }
 
@@ -988,6 +1005,7 @@ return {
 	list_full_event: list_full_event,
 	list_matches: list_matches,
 	match_by_id: match_by_id,
+	match_opened: match_opened,
 	on_edit_event: on_edit_event,
 	$request: $request,
 	resync: resync,
@@ -1003,6 +1021,7 @@ return {
 	ui_uninstall_staticnet: ui_uninstall_staticnet,
 	uninstall_refmode_push: uninstall_refmode_push,
 	update_event: update_event,
+	update_matchlist_title: update_matchlist_title,
 	reload_match_information: reload_match_information,
 };
 

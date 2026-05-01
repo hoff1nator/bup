@@ -584,7 +584,10 @@ var i18n_en = {
 'displaymode:show_court_number': 'Show court number',
 'displaymode:show_competition': 'Show the competition',
 'displaymode:show_round': 'Show the round',
+'displaymode:show_players': 'Show player names',
+'displaymode:show_team_name': 'Show team names',
 'displaymode:show_middle_name': 'Show middle names of players',
+'displaymode:abbreviate_first_name': 'Abbreviate first names',
 'displaymode:show_doubles_receiving': 'Underline the receiving player in doubles',
 'displaymode:hide settings': 'Hide',
 

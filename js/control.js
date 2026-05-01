@@ -90,6 +90,7 @@ function start_match(s, setup, init_presses, metadata) {
 	set_current(s);
 	render.show();
 	render.ui_render(s);
+	network.match_opened(s);
 	network.send_press(s, {
 		type: '_start_match',
 	});

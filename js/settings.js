@@ -37,7 +37,10 @@ var default_settings = {
 	d_show_court_number: true,
 	d_show_competition: true,
 	d_show_round: true,
+	d_show_players: true,
+	d_show_team_name: true,
 	d_show_middle_name: false,
+	d_abbreviate_first_name: false,
 	d_show_doubles_receiving: false,
 	settings_autohide: 30000,
 	dads_interval: 20000,
@@ -203,7 +206,6 @@ function hide(force, skip_state) {
 function update_court(s) {
 	var court_select = $('.settings [name="court_select"]');
 	court_select.val(s.settings.court_id);
-	network.reload_match_information();
 }
 
 function update_refclient(s) {
@@ -248,7 +250,10 @@ var _settings_checkboxes = [
 	'd_show_court_number',
 	'd_show_competition',
 	'd_show_round',
+	'd_show_players',
+	'd_show_team_name',
 	'd_show_middle_name',
+	'd_abbreviate_first_name',
 	'd_show_doubles_receiving',
 	'd_team_colors',
 	'referee_service_judges',
@@ -581,6 +586,9 @@ function on_mode_change(s) {
 		uiu.visible(el, visible);
 	});
 	update_court_settings(s);
+	if (network && typeof network.update_matchlist_title === 'function') {
+		network.update_matchlist_title(s);
+	}
 
 	wakelock.update(s);
 	update_refclient(s);

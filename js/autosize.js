@@ -12,6 +12,10 @@ function autosize_once(task, deferred) {
 	}
 
 	var el = task.el;
+	if (!el || (typeof el.isConnected !== 'undefined' && !el.isConnected)) {
+		delete tasks[task.id];
+		return;
+	}
 	var el_style = window.getComputedStyle(el, null);
 	var current_style = el_style.getPropertyValue('font-size');
 	if (!current_style && !deferred) {
@@ -19,12 +23,17 @@ function autosize_once(task, deferred) {
 		setTimeout(function() {
 			autosize_once(task, true);
 		});
+		return;
 	}
 	var desired = task.desired_func(el);
 	var current_width = el.offsetWidth;
 	var current_height = el.offsetHeight;
 	var m = /^([0-9.,]+)(\s*px)$/.exec(current_style);
 	if (!m) {
+		if (!current_style) {
+			delete tasks[task.id];
+			return;
+		}
 		report_problem.silent_error('Could not parse font-size for autosizing: ' + current_style + ' (deferred: ' + JSON.stringify(deferred) + ')');
 		return;
 	}
@@ -56,6 +65,7 @@ function unmaintain(el) {
 		return;
 	}
 	delete tasks[as_id];
+	el.removeAttribute('data-autosize-id');
 }
 
 function unmaintain_all(container) {

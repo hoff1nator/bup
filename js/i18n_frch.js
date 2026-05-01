@@ -550,7 +550,10 @@ var i18n_frch = {
 'displaymode:show_court_number': 'Afficher le numéro de court',
 'displaymode:show_competition': 'Afficher la concurrence',
 'displaymode:show_round': 'Afficher le tour',
+'displaymode:show_players': 'Afficher les noms des joueurs',
+'displaymode:show_team_name': 'Afficher les noms des équipes',
 'displaymode:show_middle_name': 'Afficher le deuxième prénom des joueurs',
+'displaymode:abbreviate_first_name': 'Abréger les prénoms',
 'displaymode:show_doubles_receiving': 'Souligner le joueur receveur en double',
 'displaymode:hide settings': 'Cacher',
 
