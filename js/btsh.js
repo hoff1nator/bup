@@ -964,7 +964,9 @@ function btsh(baseurl, tournament_key) {
 					courts: msg && msg.courts ? msg.courts.length : 0,
 				});
 			}
-			_apply_v2_court_to_settings('');
+			if (!btsh_court_selection_pending) {
+				_apply_v2_court_to_settings('');
+			}
 			_apply_v2_display_settings(msg && msg.display_settings);
 			_apply_v2_display_identity(msg && msg.display, msg && msg.client_mode);
 			last_v2_display_state = null;
@@ -976,8 +978,10 @@ function btsh(baseurl, tournament_key) {
 					bts_update_callback(null, state, state.bts_event);
 				}
 				_ensure_v2_umpire_background();
-				settings.show();
-				settings.on_mode_change(state);
+				if (!btsh_court_selection_pending) {
+					settings.show();
+					settings.on_mode_change(state);
+				}
 				ok = true;
 				return;
 			}
@@ -1249,6 +1253,16 @@ function btsh(baseurl, tournament_key) {
 					had_assigned_court &&
 					(!next_settings.court_id || next_settings.court_id === 'referee')
 				);
+				var has_assigned_court = !!(
+					next_settings &&
+					next_settings.court_id &&
+					next_settings.court_id !== 'referee'
+				);
+				var local_court_selection_applied = !!(
+					btsh_court_selection_pending &&
+					has_assigned_court &&
+					String(btsh_court_selection_pending) === String(next_settings.court_id)
+				);
 				var court_changed = (
 					previous_settings &&
 					Object.prototype.hasOwnProperty.call(next_settings, 'court_id') &&
@@ -1266,7 +1280,7 @@ function btsh(baseurl, tournament_key) {
 				);
 				state.settings = next_settings;
 				state.dads = (c.val && c.val.advertisements) ? c.val.advertisements : [];
-				if (state.settings && state.settings.court_id && state.settings.court_id !== 'referee') {
+				if (has_assigned_court) {
 					btsh_court_selection_pending = null;
 				}
 				if (switched_to_umpire) {
@@ -1277,6 +1291,12 @@ function btsh(baseurl, tournament_key) {
 				settings.update(state);
 				settings.on_mode_change(state);
 				if (
+					local_court_selection_applied &&
+					settings.get_mode(state) === 'umpire'
+				) {
+					settings.hide(true);
+					settings.on_mode_change(state);
+				} else if (
 					(switched_to_umpire || lost_assigned_court || court_changed) &&
 					settings.get_mode(state) === 'umpire'
 				) {
