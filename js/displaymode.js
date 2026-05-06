@@ -3691,35 +3691,127 @@ function show_match_meta(timer_state, parent, default_color, exigent_color, matc
 	}
 
 	let timer_alternative_text = [];
+	var resize_listener_installed = false;
 
 	var create_text_element = function(parent, element, color) {
 		let fontSize = '13vh';
-		timer_alternative_text.push([uiu.el(parent, 'div', {style: ('font-size:' + fontSize + '; color:' + color +'; width: fit-content;')}, element),  fontSize]);
+		timer_alternative_text.push([uiu.el(parent, 'div', {style: ('font-size:' + fontSize + '; color:' + color +'; white-space:nowrap; flex:0 0 auto;')}, element),  fontSize, {}]);
+	};
+
+	var measure_visual_text_height = function(el, text, font_size_px) {
+		if (typeof document === 'undefined') {
+			return font_size_px;
+		}
+		var canvas = measure_visual_text_height.canvas || (measure_visual_text_height.canvas = document.createElement('canvas'));
+		var ctx = canvas.getContext && canvas.getContext('2d');
+		if (!ctx) {
+			return font_size_px;
+		}
+		var style = window.getComputedStyle(el, null);
+		ctx.font = [
+			style.fontStyle || 'normal',
+			style.fontVariant || 'normal',
+			style.fontWeight || 'normal',
+			font_size_px + 'px',
+			style.fontFamily || 'sans-serif'
+		].join(' ');
+		var metrics = ctx.measureText(text || '0');
+		var visual_height = (metrics.actualBoundingBoxAscent || 0) + (metrics.actualBoundingBoxDescent || 0);
+		return visual_height || font_size_px;
+	};
+
+	var visual_font_size_for_height = function(el, target_height_px) {
+		var probe_size = 100;
+		var probe_height = measure_visual_text_height(el, el.textContent || '0', probe_size);
+		if (!probe_height) {
+			return target_height_px + 'px';
+		}
+		return (probe_size * target_height_px / probe_height) + 'px';
+	};
+
+	var resolve_font_size = function(el, origFontSize, opts, parent_height) {
+		if (opts && opts.visual_height) {
+			return visual_font_size_for_height(el, parent_height * opts.visual_height);
+		}
+		return origFontSize;
 	};
 
 	var auto_size_alternative_strings = function(parrent_el) {
-		var parrent_width = parrent_el.offsetWidth;
+		if (!parrent_el || (typeof parrent_el.isConnected !== 'undefined' && !parrent_el.isConnected)) {
+			return;
+		}
+		var parrent_width = parrent_el.clientWidth || parrent_el.offsetWidth || parrent_el.getBoundingClientRect().width;
+		if (!parrent_width) {
+			return;
+		}
+		var parrent_height = parrent_el.clientHeight || parrent_el.offsetHeight || parrent_el.getBoundingClientRect().height;
+		if (!parrent_height) {
+			return;
+		}
+		var available_width = Math.max(1, parrent_width * 0.96);
+		var available_height = Math.max(1, parrent_height);
 		var child_width = 0;
+		var child_height = 0;
 		timer_alternative_text.forEach(function(item) {
-			let [el, origFontSize] = item;
-			el.style.fontSize = origFontSize;
-			child_width += el.offsetWidth;
+			let [el, origFontSize, opts] = item;
+			if (!el || (typeof el.isConnected !== 'undefined' && !el.isConnected)) {
+				return;
+			}
+			el.style.fontSize = resolve_font_size(el, origFontSize, opts, parrent_height);
+			child_width += Math.max(el.scrollWidth || 0, el.offsetWidth || 0, el.getBoundingClientRect().width || 0);
+			if (opts && opts.visual_height) {
+				var current_style = window.getComputedStyle(el, null).getPropertyValue('font-size') || '0px';
+				var current_size = parseFloat(current_style);
+				child_height = Math.max(child_height, measure_visual_text_height(el, el.textContent || '0', current_size));
+			} else {
+				child_height = Math.max(child_height, el.scrollHeight || 0, el.offsetHeight || 0, el.getBoundingClientRect().height || 0);
+			}
 		});
 
-		if(parrent_width < child_width) {
+		var scale = Math.min(
+			1,
+			child_width ? (available_width / child_width) : 1,
+			child_height ? (available_height / child_height) : 1
+		);
+		if(scale < 1) {
 			timer_alternative_text.forEach(function(item) {
 
-				let [el, origFontSize] = item;
-				var match = origFontSize.match(/^(\d*\.?\d+)\s*([a-zA-Z%]+)$/);
+				let [el, origFontSize, opts] = item;
+				var baseFontSize = resolve_font_size(el, origFontSize, opts, parrent_height);
+				var match = baseFontSize.match(/^(\d*\.?\d+)\s*([a-zA-Z%]+)$/);
 				var numeric_value = match[1] ? parseFloat(match[1]) : 10;
 				var unit = match[2] ? match[2] : 'vh';
 
-				el.style.fontSize = numeric_value * (parrent_width/child_width) + unit;
+				el.style.fontSize = numeric_value * scale + unit;
 			});
 		}
 	}
 
-	window.addEventListener('resize', () => {auto_size_alternative_strings(parent);} , true);
+	var schedule_auto_size = function() {
+		auto_size_alternative_strings(parent);
+		if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+			window.requestAnimationFrame(function() {
+				auto_size_alternative_strings(parent);
+			});
+		}
+		setTimeout(function() {
+			auto_size_alternative_strings(parent);
+		}, 0);
+		setTimeout(function() {
+			auto_size_alternative_strings(parent);
+		}, 100);
+		if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+			document.fonts.ready.then(function() {
+				auto_size_alternative_strings(parent);
+			});
+		}
+		if (!resize_listener_installed && typeof window !== 'undefined') {
+			resize_listener_installed = true;
+			window.addEventListener('resize', function() {
+				auto_size_alternative_strings(parent);
+			} , true);
+		}
+	};
 
 	if(timer_state) {
 		var tv = timer.calc(timer_state);
@@ -3727,15 +3819,15 @@ function show_match_meta(timer_state, parent, default_color, exigent_color, matc
 
 	if (!tv || !tv.visible) {
 		match_meta.forEach(function(element){create_text_element(parent, element, default_color);});
-		auto_size_alternative_strings(parent);
+		schedule_auto_size();
 		return;
 	}
 
 	create_text_element(parent, match_meta[0], default_color);
 
-	let timerFontSize = '25vh';
-	var el = uiu.el(parent, 'div', {style: ('font-size:' + timerFontSize + '; color:' + default_color +';')}, '\xa0'+tv.str);
-	timer_alternative_text.push([el, timerFontSize]);
+	let timerFontSize = '19vh';
+	var el = uiu.el(parent, 'div', {style: ('font-size:' + timerFontSize + '; line-height:1; color:' + default_color +'; white-space:nowrap; flex:0 0 auto;')}, '\xa0'+tv.str);
+	timer_alternative_text.push([el, timerFontSize, {visual_height: 0.95}]);
 	var tobj = {};
 	active_timers.push(tobj);
 
@@ -3763,7 +3855,7 @@ function show_match_meta(timer_state, parent, default_color, exigent_color, matc
 			timer_alternative_text = [];
 			match_meta.forEach(function(element){create_text_element(parent, element, default_color);});
 		}
-		auto_size_alternative_strings(parent);
+		schedule_auto_size();
 	};
 	update();
 }
@@ -6334,14 +6426,15 @@ function render_v2_tournamentcourt_display_state(s, dto) {
 			'z-index:1;' +
 			'position:absolute;' +
 			'right: 53vh;' +
-			'top:42vh;' +
-			'bottom:42vh;' +
+			'top:40vh;' +
+			'bottom:40vh;' +
 			'display:flex;' +
 			'align-items:center;' +
 			'font-size:10vh;' +
 			'justify-content: space-between;' +
 			'width: calc(99vw - 53vh);' +
-			'text-wrap: nowrap;'
+			'white-space:nowrap;' +
+			'overflow:visible;'
 		),
 	});
 
