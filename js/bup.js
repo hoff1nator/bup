@@ -110,6 +110,7 @@ if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var refmode_client_ui = require('./refmode_client_ui');
 	var refmode_referee = require('./refmode_referee');
 	var refmode_referee_ui = require('./refmode_referee_ui');
+	var resultmode = require('./resultmode');
 	var register_sworker = require('./register_sworker');
 	var report_problem = require('./report_problem');
 	var scoresheet = require('./scoresheet');

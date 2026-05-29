@@ -10,4 +10,5 @@ mail.*
 
 
 /vendor/
+/.vs
 .DS_Store

@@ -96,6 +96,15 @@ function send_setup_update(s, match_id, props, cb) {
 	}
 }
 
+function send_tshirt_sizes(s, match_id, players, cb) {
+	var netw = get_netw();
+	if (netw && netw.send_tshirt_sizes) {
+		netw.send_tshirt_sizes(s, match_id, players, cb);
+	} else if (cb) {
+		cb(null);
+	}
+}
+
 function _score_text(network_score) {
 	if (!network_score) {
 		return '';
@@ -313,6 +322,27 @@ function ui_render_matchlist(s, event) {
 				'class': 'setup_network_umpire_name',
 			}, umpire_name);
 		}
+
+		var _tabletoperator_str = function (tabletoperators) {
+			if (tabletoperators.length === 0) {
+				return 'N.N';
+			} else if (tabletoperators.length == 1) {
+				return tabletoperators[0].name;
+			} else {
+				return tabletoperators[0].name + ' / ' + tabletoperators[1].name;
+			}
+
+		};
+
+		if (match.setup.tabletoperators && match.setup.tabletoperators.length > 0) {
+			uiu.el(btn, 'span', {
+				'class': 'setup_network_tabletoperator',
+			}, s._('network:Tabletoperator'));
+			uiu.el(btn, 'span', {
+				'class': 'setup_network_tabletoperator',
+			}, _tabletoperator_str(match.setup.tabletoperators));
+		}
+
 		var score_text = _score_text(match.network_score);
 		uiu.el(btn, 'span', {
 			'class': 'setup_network_match_score',
@@ -321,7 +351,6 @@ function ui_render_matchlist(s, event) {
 		click.on(btn, function() {
 			enter_match(match);
 		});
-
 	});
 }
 
@@ -361,57 +390,76 @@ function ui_list_matches(s, silent, no_timer) {
 			return;
 		}
 
-		update_event(s, event);
+		if(event){
+			update_event(s, event);
+		}
+		
 
 		eventsheet.render_links(s, uiu.qs('.setup_eventsheets'));
 		urlexport.render_links(s, uiu.qs('.urlexport_links'));
 		var editable = netw.editable(s);
-		var use_setupsheet = event.team_competition;
+		var use_setupsheet = event ? event.team_competition : false;
 		uiu.visible_qs('.setupsheet_link', editable && use_setupsheet);
 		uiu.visible_qs('.editevent_link', editable && !use_setupsheet);
-		ui_render_matchlist(s, event);
+		if(event){
+			ui_render_matchlist(s, event);
+		}
 	}, function(s) {
 		return no_timer ? 'abort' : s.settings.network_update_interval;
 	});
+}
+
+function reload_match_information() {
+	var netw = get_netw();
+	if (netw && netw.push_service) {
+		netw.reload_match_information();
+	}
 }
 
 // Returns a callback to be called when the updates are no longer required.
 // cb gets called with (err, s, event); s is NOT updated implicitly
 // calc_timeout is called with s and must return immediately the timeout or the string 'abort'
 function subscribe(s, cb, calc_timeout) {
-	var cancelled = false;
-	var timeout = null;
 
-	function query() {
-		if (cancelled) {
-			return;
+	var netw = get_netw();
+	if (netw.push_service) {
+		netw.subscribe(s, cb, calc_timeout);
+	} else { 
+
+		var cancelled = false;
+		var timeout = null;
+
+		function query() {
+			if (cancelled) {
+				return;
+			}
+			var netw = get_netw();
+			if (!netw) {
+				cb({
+					msg: s._('network:error:unconfigured'),
+				}, s);
+				return;
+			}
+			list_matches(s, function(err, event) {
+				cb(err, s, event);
+			});
+			var new_timeout = calc_timeout(s);
+			if (new_timeout === 'abort') {
+				cancelled = true;
+				return;
+			}
+			timeout = setTimeout(query, new_timeout);
 		}
-		var netw = get_netw();
-		if (!netw) {
-			cb({
-				msg: s._('network:error:unconfigured'),
-			}, s);
-			return;
-		}
-		list_matches(s, function(err, event) {
-			cb(err, s, event);
-		});
-		var new_timeout = calc_timeout(s);
-		if (new_timeout === 'abort') {
+		query();
+
+		return function() {
 			cancelled = true;
-			return;
-		}
-		timeout = setTimeout(query, new_timeout);
+			if (timeout) {
+				clearTimeout(timeout);
+				timeout = null;
+			}
+		};
 	}
-	query();
-
-	return function() {
-		cancelled = true;
-		if (timeout) {
-			clearTimeout(timeout);
-			timeout = null;
-		}
-	};
 
 }
 
@@ -438,7 +486,9 @@ function resync() {
 	if (state.initialized) {
 		netw.sync(state);
 	}
-	ui_list_matches(state, true, true);
+	if (!state.ui.resultmode_visible && !state.ui.displaymode_visible) {
+		ui_list_matches(state, true, true);
+	}
 
 	if (resync_timeout !== null) {
 		window.clearTimeout(resync_timeout);
@@ -519,9 +569,9 @@ function _court_by_id(all_courts, court_id) {
 }
 
 function _court_pick_dialog(s, all_courts, on_cancel) {
-	bupui.make_pick(s, s._('Select Court'), all_courts, function(c) {
-		_set_court(s, c);
-	}, on_cancel, uiu.qs('body'), 5);
+	//bupui.make_pick(s, s._('Select Court'), all_courts, function(c) {
+	//	_set_court(s, c);
+	//}, on_cancel, uiu.qs('body'), 5);
 }
 
 function ui_init_court(s, hash_query) {
@@ -535,6 +585,7 @@ function ui_init_court(s, hash_query) {
 		var c = _court_by_id(all_courts, hash_query.court);
 		if (c) {
 			_set_court(s, c);
+			reload_match_information();
 		}
 	}
 	var configured = (hash_query.select_court === undefined) && all_courts.some(function(c) {
@@ -854,6 +905,7 @@ return {
 	score_transmitted: score_transmitted,
 	send_press: send_press,
 	send_setup_update: send_setup_update,
+	send_tshirt_sizes: send_tshirt_sizes,
 	subscribe: subscribe,
 	supports_order: supports_order,
 	ui_init: ui_init,
@@ -864,6 +916,7 @@ return {
 	ui_uninstall_staticnet: ui_uninstall_staticnet,
 	uninstall_refmode_push: uninstall_refmode_push,
 	update_event: update_event,
+	reload_match_information: reload_match_information,
 };
 
 

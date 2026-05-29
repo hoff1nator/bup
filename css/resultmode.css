@@ -125,11 +125,19 @@
 	color: #888;
 }
 
+.resultmode_presence_headline {
+	font-size: 4vmin;
+	font-weight: bold;
+	color: #f9a825;
+	text-align: center;
+	margin-top: 4vmin;
+}
+
 .resultmode_presence_container {
 	display: flex;
 	flex-direction: column;
 	gap: 4vmin;
-	margin-top: 6vmin;
+	margin-top: 4vmin;
 }
 
 .resultmode_presence_btn {
@@ -184,9 +192,10 @@
 .resultmode_court_label {
 	position: fixed;
 	top: 3vmin;
-	left: 3vmin;
-	font-size: 3vmin;
-	color: #888;
+	right: 3vmin;
+	font-size: 12vmin;
+	font-weight: bold;
+	color: #ffcc00;
 	z-index: 510;
 	pointer-events: none;
 }
@@ -300,6 +309,73 @@
 }
 
 
+/* T-shirt size selection */
+.resultmode_tshirt_container {
+	margin-top: 4vmin;
+	display: flex;
+	flex-direction: column;
+	gap: 3vmin;
+}
+
+.resultmode_tshirt_row {
+	background: #16213e;
+	border: 2px solid #333;
+	border-radius: 1vmin;
+	padding: 2vmin;
+}
+
+.resultmode_tshirt_name {
+	font-size: 3.5vmin;
+	font-weight: bold;
+	color: #eee;
+	margin-bottom: 1.5vmin;
+	text-align: center;
+}
+
+.resultmode_tshirt_buttons {
+	display: flex;
+	gap: 1.5vmin;
+	justify-content: center;
+}
+
+.resultmode_tshirt_btn {
+	flex: 1;
+	max-width: 80px;
+	padding: 2.5vmin 1vmin;
+	font-size: 3.5vmin;
+	font-weight: bold;
+	background: #0f3460;
+	color: #ccc;
+	border: 2px solid #555;
+	border-radius: 1vmin;
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.resultmode_tshirt_btn:hover {
+	background: #1a4a7a;
+	border-color: #888;
+}
+
+.resultmode_tshirt_btn.resultmode_tshirt_selected {
+	background: #0d2818;
+	border-color: #4caf50;
+	color: #4caf50;
+}
+
+.resultmode_tshirt_ready {
+	text-align: center;
+	font-size: 3vmin;
+	color: #888;
+	margin-top: 4vmin;
+	padding: 2vmin;
+}
+
+.resultmode_tshirt_ready.resultmode_tshirt_ready_done {
+	color: #4caf50;
+	font-weight: bold;
+}
+
 @media screen and (max-width: 480px), screen and (max-height: 480px) {
 	.resultmode_team {
 		font-size: 5vmin;
@@ -307,5 +383,20 @@
 	.resultmode_score_input {
 		width: 14vmin;
 		font-size: 7vmin;
+	}
+	.resultmode_court_label {
+		font-size: 5vmin;
+	}
+}
+
+@media screen and (orientation: portrait) {
+	.resultmode_layout {
+		padding-top: 16vmin;
+	}
+}
+
+@media screen and (min-width: 481px) and (max-width: 1024px) {
+	.resultmode_court_label {
+		font-size: 8vmin;
 	}
 }

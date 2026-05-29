@@ -309,6 +309,7 @@ if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var network = require('./network');
 	var order = require('./order');
 	var refmode_referee_ui = null; // break cycle, should be require('./refmode_referee_ui');
+	var resultmode = require('./resultmode');
 	var render = require('./render');
 	var report_problem = require('./report_problem');
 	var scoresheet = require('./scoresheet');

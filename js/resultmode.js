@@ -7,6 +7,50 @@ var resultmode = (function() {
 var _poll_cancel = null;  // Cancellation function for the polling loop
 var _current_match = null;
 var _presence = [false, false];  // Which teams have confirmed presence
+var _overlays_added = false;  // Track if overlays have been added
+var _overlays_added_rest = false;
+var _call_settings = null;  // Populated from event.call_settings on each poll
+var _wake_lock = null;
+var _wake_video = null;
+
+function _acquire_wake_lock() {
+	if (navigator.wakeLock) {
+		navigator.wakeLock.request('screen').then(function(lock) {
+			_wake_lock = lock;
+			_wake_lock.addEventListener('release', function() {
+				_wake_lock = null;
+				if (state.ui.resultmode_visible) _acquire_wake_lock();
+			});
+		}).catch(function() {});
+	}
+	if (!_wake_video) {
+		var v = document.createElement('video');
+		v.setAttribute('playsinline', '');
+		v.setAttribute('muted', '');
+		v.muted = true;
+		v.setAttribute('loop', '');
+		v.style.position = 'fixed';
+		v.style.width = '1px';
+		v.style.height = '1px';
+		v.style.opacity = '0.01';
+		v.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAB9tZGF0AAAADGdkAAoT////AAADAAMAAAMAAAADAB4AAAADbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAEAAAEAAAABAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAACUdHJhawAAAFx0a2hkAAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAEAAAAAAIAAAABQAAAAAACRlZHRzAAAAHGVsc3QAAAAAAAAAACAAAAAAAAAAAAEAAAAAALxtZGlhAAAAIG1kaGQAAAAAAAAAAAAAAAAAAAAAACAAAAAgVcQAAAAAAC1oZGxyAAAAAAAAAAB2aWRlAAAAAAAAAAAAAAAAVmlkZW9IYW5kbGVyAAAAZ21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAC1zdGJsAAAAsXN0c2QAAAAAAAAAAQAAAKFhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAIAAUAEgAAABIAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY//8AAAAvYXZjQwFkAAr/4QAZZAAK1ADAIAACAB5IAAADAG4KgMBgAAADAAUeKBYnZgEAABhzdHRzAAAAAAAAAAEAAAABAAABAAAAAAx0c2MAAAAAAAABAAAAAQAAABRzdHNzAAAAAAAAAAEAAAABAAAAKHN0c3oAAAAAAAAAAAAAAAEAAAMGAAAAFHN0Y28AAAAAAAAAAQAAABQ=';
+		document.body.appendChild(v);
+		v.play().catch(function() {});
+		_wake_video = v;
+	}
+}
+
+function _release_wake_lock() {
+	if (_wake_lock) {
+		_wake_lock.release().catch(function() {});
+		_wake_lock = null;
+	}
+	if (_wake_video) {
+		_wake_video.pause();
+		_wake_video.remove();
+		_wake_video = null;
+	}
+}
 
 function _max_games(counting) {
 	switch (counting) {
@@ -174,23 +218,22 @@ function _build_presses(setup, numeric_scores) {
 	return presses;
 }
 
-function _show_match(match) {
-	_current_match = match;
-	_update_match_id_label(match.setup.match_num);
-
-	if (!match.setup.teams_present) {
-		_presence = [false, false];
-		_show_presence(match);
-	} else {
-		_show_score_entry(match);
+// Helper: get court label from event data
+function _get_court_label(event) {
+	var my_court_id = state.settings.court_id;
+	if (!my_court_id) return '';
+	var courts = (event && event.courts) || (state.event && state.event.courts);
+	if (courts) {
+		var court = courts.find(function(c) {
+			return c.court_id == my_court_id || c.id == my_court_id;
+		});
+		if (court) return court.description || court.label || my_court_id;
 	}
+	return my_court_id;
 }
 
-function _show_presence(match) {
-	var setup = match.setup;
-	var layout = document.querySelector('.resultmode_layout');
-	layout.innerHTML = '';
-
+// Helper: build team header
+function _build_header(setup) {
 	var header = document.createElement('div');
 	header.className = 'resultmode_header';
 
@@ -209,7 +252,190 @@ function _show_presence(match) {
 	team2_el.textContent = _players_str(setup, 1);
 	header.appendChild(team2_el);
 
-	layout.appendChild(header);
+	return header;
+}
+
+function _is_tshirt_round(setup, event) {
+	if (!event || !event.tshirt_enabled) return false;
+	return setup.round_name === 'HF';
+}
+
+function _get_all_players(setup) {
+	var players = [];
+	for (var t = 0; t < 2; t++) {
+		var team = setup.teams[t];
+		if (!team || !team.players) continue;
+		for (var p = 0; p < team.players.length; p++) {
+			var pl = team.players[p];
+			if (pl.name) {
+				players.push({
+					name: pl.name,
+					firstname: pl.firstname || '',
+					lastname: pl.lastname || '',
+					team_idx: t,
+					player_idx: p,
+				});
+			}
+		}
+	}
+	return players;
+}
+
+var _tshirt_sizes = {};
+
+function _show_tshirt_selection(match, event) {
+	var setup = match.setup;
+	var layout = document.querySelector('.resultmode_layout');
+	layout.innerHTML = '';
+
+	layout.appendChild(_build_header(setup));
+
+	var headline = document.createElement('div');
+	headline.className = 'resultmode_presence_headline';
+	headline.textContent = (state.lang === 'de') ? 'T-Shirt Größe wählen' : 'Select T-Shirt Size';
+	layout.appendChild(headline);
+
+	var SIZES = (event && event.tshirt_sizes) ? event.tshirt_sizes.split(',') : ['XS', 'S', 'M', 'L', 'XL'];
+	var players = _get_all_players(setup);
+	_tshirt_sizes = {};
+	_tshirt_team_sent = [false, false];
+
+	var container = document.createElement('div');
+	container.className = 'resultmode_tshirt_container';
+
+	for (var i = 0; i < players.length; i++) {
+		(function(player, idx) {
+			var row = document.createElement('div');
+			row.className = 'resultmode_tshirt_row';
+
+			var name_el = document.createElement('div');
+			name_el.className = 'resultmode_tshirt_name';
+			name_el.textContent = player.name;
+			row.appendChild(name_el);
+
+			var btns_el = document.createElement('div');
+			btns_el.className = 'resultmode_tshirt_buttons';
+
+			for (var s = 0; s < SIZES.length; s++) {
+				(function(size) {
+					var btn = document.createElement('button');
+					btn.className = 'resultmode_tshirt_btn';
+					btn.textContent = size;
+					btn.addEventListener('click', function() {
+						_tshirt_sizes[idx] = size;
+						var siblings = btns_el.querySelectorAll('.resultmode_tshirt_btn');
+						for (var b = 0; b < siblings.length; b++) siblings[b].classList.remove('resultmode_tshirt_selected');
+						btn.classList.add('resultmode_tshirt_selected');
+						_check_tshirt_complete(match, players);
+					});
+					btns_el.appendChild(btn);
+				})(SIZES[s]);
+			}
+
+			row.appendChild(btns_el);
+			container.appendChild(row);
+		})(players[i], i);
+	}
+
+	layout.appendChild(container);
+
+	var ready_el = document.createElement('div');
+	ready_el.className = 'resultmode_tshirt_ready';
+	ready_el.id = 'tshirt_ready';
+	ready_el.textContent = (state.lang === 'de') ? 'Warte auf alle Größen\u2026' : 'Waiting for all sizes\u2026';
+	layout.appendChild(ready_el);
+}
+
+var _tshirt_team_sent = [false, false];
+
+function _check_tshirt_team_presence(match, players) {
+	for (var t = 0; t < 2; t++) {
+		if (_tshirt_team_sent[t]) continue;
+		var team_done = true;
+		for (var i = 0; i < players.length; i++) {
+			if (players[i].team_idx === t && !_tshirt_sizes[i]) {
+				team_done = false;
+				break;
+			}
+		}
+		if (team_done) {
+			_tshirt_team_sent[t] = true;
+			var team_key = (t === 0) ? 'team1_present' : 'team2_present';
+			var update = {};
+			update[team_key] = true;
+			network.send_setup_update(state, match.setup.match_id, update, function() {});
+		}
+	}
+}
+
+function _check_tshirt_complete(match, players) {
+	_check_tshirt_team_presence(match, players);
+
+	var all_selected = true;
+	for (var i = 0; i < players.length; i++) {
+		if (!_tshirt_sizes[i]) { all_selected = false; break; }
+	}
+	var ready_el = document.getElementById('tshirt_ready');
+	if (!all_selected) {
+		if (ready_el) {
+			ready_el.textContent = (state.lang === 'de') ? 'Warte auf alle Größen\u2026' : 'Waiting for all sizes\u2026';
+			ready_el.classList.remove('resultmode_tshirt_ready_done');
+		}
+		return;
+	}
+
+	var player_data = [];
+	var event_name = match.setup.event_name || '';
+	for (var i = 0; i < players.length; i++) {
+		player_data.push({
+			firstname: players[i].firstname,
+			lastname: players[i].lastname,
+			name: players[i].name,
+			event_name: event_name,
+			size: _tshirt_sizes[i],
+		});
+	}
+
+	if (ready_el) {
+		ready_el.textContent = (state.lang === 'de') ? 'Wird gespeichert\u2026' : 'Saving\u2026';
+		ready_el.classList.add('resultmode_tshirt_ready_done');
+	}
+
+	network.send_tshirt_sizes(state, match.setup.match_id, player_data, function() {
+		network.send_setup_update(state, match.setup.match_id, {teams_present: true, team1_present: true, team2_present: true}, function() {
+			match.setup.teams_present = true;
+			_show_score_entry(match);
+		});
+	});
+}
+
+function _show_match(match, event) {
+	_current_match = match;
+	_update_match_id_label(match.setup.match_num);
+
+	if (!match.setup.teams_present) {
+		_presence = [false, false];
+		if (_is_tshirt_round(match.setup, event)) {
+			_show_tshirt_selection(match, event);
+		} else {
+			_show_presence(match);
+		}
+	} else {
+		_show_score_entry(match);
+	}
+}
+
+function _show_presence(match) {
+	var setup = match.setup;
+	var layout = document.querySelector('.resultmode_layout');
+	layout.innerHTML = '';
+
+	layout.appendChild(_build_header(setup));
+
+	var presence_headline = document.createElement('div');
+	presence_headline.className = 'resultmode_presence_headline';
+	presence_headline.textContent = (state.lang === 'de') ? 'Spieler Anwesend' : 'Players Reporting Present';
+	layout.appendChild(presence_headline);
 
 	var presence_container = document.createElement('div');
 	presence_container.className = 'resultmode_presence_container';
@@ -224,11 +450,17 @@ function _show_presence(match) {
 			btn.addEventListener('click', function() {
 				_presence[team_idx] = true;
 				btn.classList.add('resultmode_presence_confirmed');
+				var team_key = (team_idx === 0) ? 'team1_present' : 'team2_present';
+				var update = {};
+				update[team_key] = true;
 				if (_presence[0] && _presence[1]) {
-					network.send_setup_update(state, setup.match_id, {teams_present: true}, function() {
+					update.teams_present = true;
+					network.send_setup_update(state, setup.match_id, update, function() {
 						match.setup.teams_present = true;
 						_show_score_entry(match);
 					});
+				} else {
+					network.send_setup_update(state, setup.match_id, update, function() {});
 				}
 			});
 			presence_container.appendChild(btn);
@@ -246,31 +478,16 @@ function _show_score_entry(match) {
 	var layout = document.querySelector('.resultmode_layout');
 	layout.innerHTML = '';
 
-	// Header
-	var header = document.createElement('div');
-	header.className = 'resultmode_header';
+	layout.appendChild(_build_header(setup));
 
-	var team1_el = document.createElement('div');
-	team1_el.className = 'resultmode_team resultmode_team1';
-	team1_el.textContent = _players_str(setup, 0);
-	header.appendChild(team1_el);
-
-	var vs_el = document.createElement('div');
-	vs_el.className = 'resultmode_vs';
-	vs_el.textContent = 'vs';
-	header.appendChild(vs_el);
-
-	var team2_el = document.createElement('div');
-	team2_el.className = 'resultmode_team resultmode_team2';
-	team2_el.textContent = _players_str(setup, 1);
-	header.appendChild(team2_el);
-
-	layout.appendChild(header);
-
-	if (setup.match_name) {
+	var game_info_parts = [];
+	if (setup.event_name) game_info_parts.push(setup.event_name);
+	if (setup.match_name) game_info_parts.push(setup.match_name);
+	if (setup.match_num) game_info_parts.push('#' + setup.match_num);
+	if (game_info_parts.length > 0) {
 		var match_name_el = document.createElement('div');
 		match_name_el.className = 'resultmode_match_name';
-		match_name_el.textContent = setup.match_name;
+		match_name_el.textContent = game_info_parts.join(' \u2013 ');
 		layout.appendChild(match_name_el);
 	}
 
@@ -284,7 +501,7 @@ function _show_score_entry(match) {
 
 		var label = document.createElement('span');
 		label.className = 'resultmode_game_label';
-		label.textContent = 'Game ' + (i + 1);
+		label.textContent = state._('resultmode:set', {num: i + 1}, 'Set ' + (i + 1));
 		row.appendChild(label);
 
 		var score_inputs = document.createElement('div');
@@ -345,34 +562,46 @@ function _show_score_entry(match) {
 	});
 }
 
-function _add_overlays() {
+function _add_overlays(event) {
 	var wrapper = document.querySelector('.resultmode_wrapper');
-	if (wrapper.querySelector('.resultmode_settings_btn')) {
-		return;
+
+	if (!_overlays_added) {
+		_overlays_added = true;
+
+		// Top-left: court/field label
+		var court_el = document.createElement('div');
+		court_el.className = 'resultmode_court_label';
+		wrapper.appendChild(court_el);
 	}
 
-	// Top-left: court/field label
-	var court_el = document.createElement('div');
-	court_el.className = 'resultmode_court_label';
-	var court_desc = state.settings.court_description || state.settings.court_id || '';
-	court_el.textContent = court_desc;
-	wrapper.appendChild(court_el);
+	// Update court label each poll (event data may not have been available earlier)
+	var court_label_el = wrapper.querySelector('.resultmode_court_label');
+	if (court_label_el) {
+		court_label_el.textContent = _get_court_label(event);
+	}
 
-	// Bottom-left: match ID (updated per match)
-	var match_id_el = document.createElement('div');
-	match_id_el.className = 'resultmode_match_id_label';
-	wrapper.appendChild(match_id_el);
+	if (!_overlays_added_rest) {
+		_overlays_added_rest = true;
 
-	// Bottom-right: settings button
-	var back_btn = document.createElement('button');
-	back_btn.className = 'resultmode_settings_btn';
-	back_btn.title = 'Settings';
-	back_btn.textContent = '\u2699';
-	back_btn.addEventListener('click', function() {
-		hide();
-		settings.show();
-	});
-	wrapper.appendChild(back_btn);
+		// Bottom-left: match ID (updated per match)
+		var match_id_el = document.createElement('div');
+		match_id_el.className = 'resultmode_match_id_label';
+		wrapper.appendChild(match_id_el);
+
+		// Bottom-right: fullscreen toggle
+		var fs_btn = document.createElement('button');
+		fs_btn.className = 'resultmode_settings_btn';
+		fs_btn.title = 'Fullscreen';
+		fs_btn.textContent = '\u26f6';
+		fs_btn.addEventListener('click', function() {
+			if (document.fullscreenElement) {
+				document.exitFullscreen();
+			} else {
+				document.documentElement.requestFullscreen();
+			}
+		});
+		wrapper.appendChild(fs_btn);
+	}
 }
 
 function _update_match_id_label(match_id) {
@@ -403,19 +632,20 @@ function _show_confirm_dialog(match, numeric_scores, winner_name, score_str) {
 	var ok_btn = dialog.querySelector('.resultmode_confirm_ok');
 	var cancel_btn = dialog.querySelector('.resultmode_confirm_cancel');
 
+	// Remove old listeners by replacing elements
 	var new_ok = ok_btn.cloneNode(true);
-	ok_btn.parentNode.replaceChild(new_ok, ok_btn);
 	var new_cancel = cancel_btn.cloneNode(true);
+	ok_btn.parentNode.replaceChild(new_ok, ok_btn);
 	cancel_btn.parentNode.replaceChild(new_cancel, cancel_btn);
 
 	new_ok.addEventListener('click', function() {
 		dialog.style.display = 'none';
 		_submit_result(match, numeric_scores);
-	});
+	}, {once: true});
 
 	new_cancel.addEventListener('click', function() {
 		dialog.style.display = 'none';
-	});
+	}, {once: true});
 
 	dialog.style.display = 'flex';
 }
@@ -457,30 +687,41 @@ function _on_poll(err, event) {
 		return;
 	}
 
-	// Find the next unfinished match on this court
+	// Add overlays and refresh court label with fresh event data
+	_add_overlays(event);
+
+	// Update call settings from fresh event data
+	_call_settings = event.call_settings || null;
+	var courts_to_call_enabled = _call_settings ? _call_settings.courts_to_call_enabled : true;
+
+	// Find the next unfinished match on this court only
 	var matches = event.matches || [];
+	var my_court_id = state.settings.court_id;
+	var current_still_present = false;
 	var next = null;
 	for (var i = 0; i < matches.length; i++) {
 		var m = matches[i];
 		if (m.setup.incomplete) continue;
-		// Skip the match we just submitted
+		if (my_court_id && m.setup.court_id !== my_court_id) continue;
+		if (courts_to_call_enabled && !m.setup.called_to_court) continue;
+		// If current match is still in the list, keep showing it (user may be entering results)
 		if (_current_match && m.setup.match_id === _current_match.setup.match_id) {
-			next = m;
-			break;
+			current_still_present = true;
+			continue;
 		}
-		if (!_current_match) {
-			// Check if this match is not yet finished
+		// Find first unfinished match
+		if (!next) {
 			var mwinner = m.network_score ? calc.match_winner(m.setup.counting, m.network_score) : 'inprogress';
 			if (mwinner !== 'left' && mwinner !== 'right') {
 				next = m;
-				break;
 			}
 		}
 	}
 
-	if (next && (!_current_match || next.setup.match_id !== _current_match.setup.match_id)) {
-		_show_match(next);
-	} else if (!next && !_current_match) {
+	if (!current_still_present && next) {
+		_show_match(next, event);
+	} else if (!current_still_present && !next) {
+		_current_match = null;
 		_show_waiting();
 	}
 }
@@ -491,12 +732,14 @@ function show() {
 	}
 	state.ui.resultmode_visible = true;
 	_current_match = null;
+	_overlays_added = false;  // Reset for new session
+	_overlays_added_rest = false;
 
 	var wrapper = document.querySelector('.resultmode_wrapper');
 	wrapper.style.display = 'block';
 
-	_add_overlays();
 	_show_waiting();
+	_acquire_wake_lock();
 
 	// Start polling
 	if (_poll_cancel) {
@@ -512,6 +755,7 @@ function show() {
 }
 
 function hide() {
+	_release_wake_lock();
 	if (!state.ui.resultmode_visible) {
 		return;
 	}

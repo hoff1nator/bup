@@ -23,6 +23,7 @@ var default_settings = {
 	d_cbg4: '#404040',
 	d_cfg2: '#aaaaaa',
 	d_cfg3: '#cccccc',
+	d_cexp: '#ff0000',
 	d_cborder: '#444444',
 	d_ct: '#80ff00',
 	d_ctim_blue: '#0070c0',
@@ -32,7 +33,12 @@ var default_settings = {
 	d_crecv: '#707676',
 	d_scale: 100,
 	d_team_colors: false,
-	d_show_pause: false,
+	d_show_pause: true,
+	d_show_court_number: true,
+	d_show_competition: true,
+	d_show_round: true,
+	d_show_middle_name: false,
+	d_show_doubles_receiving: false,
 	settings_autohide: 30000,
 	dads_interval: 20000,
 	dads_wait: 60000,
@@ -48,7 +54,6 @@ var default_settings = {
 	editmode_doubleclick: false,
 	displaymode_style: 'top+list',
 	displaymode_court_id: 1,
-	displaymode_filtered_courts: '[]',
 	wakelock: 'display',
 	click_mode: 'auto',
 	refmode_client_enabled: false,
@@ -56,7 +61,7 @@ var default_settings = {
 	refmode_referee_ws_url: 'wss://live.aufschlagwechsel.de/refmode_hub/',
 	refmode_client_node_name: '',
 	referee_service_judges: false,
-	settings_style: 'default',
+	style: 'default',
 };
 
 function load() {
@@ -187,15 +192,16 @@ function hide(force, skip_state) {
 function update_court(s) {
 	var court_select = $('.settings [name="court_select"]');
 	court_select.val(s.settings.court_id);
+	network.reload_match_information();
 }
 
 function update_refclient(s) {
-	var settings_style = get_settings_style(s);
+	var style = get_settings_style(s);
 
 	var ref_ui_visible = (
 		(get_mode(s) !== 'referee')
 		&& s.settings.refmode_client_enabled
-		&& settings_style === 'complete');
+		&& style === 'complete');
 	uiu.$visible_qs(
 		'.settings_refmode_client_container', ref_ui_visible);
 	refmode_client_ui.on_settings_change(s);
@@ -208,6 +214,11 @@ var _settings_checkboxes = [
 	'refmode_client_enabled',
 	'displaymode_reverse_order',
 	'd_show_pause',
+	'd_show_court_number',
+	'd_show_competition',
+	'd_show_round',
+	'd_show_middle_name',
+	'd_show_doubles_receiving',
 	'd_team_colors',
 	'referee_service_judges',
 ];
@@ -220,8 +231,6 @@ var _settings_textfields = [
 	'refmode_referee_ws_url',
 	'refmode_client_node_name',
 	'dads_utime',
-
-	'displaymode_filtered_courts',
 
 	// really color fields
 	'd_c0',
@@ -261,14 +270,14 @@ var _settings_selects = [
 	'language',
 	'wakelock',
 	'dads_mode',
-	'settings_style',
+	'style',
 ];
 
 function update_court_settings(s) {
 	var automatic = false;
 	var manual = false;
 	if (get_mode(s) === 'umpire') {
-		automatic = uiu.qs('.settings select[name="court_select"]').getAttribute('data-auto-available') === 'true';
+		automatic = true; //uiu.qs('.settings select[name="court_select"]').getAttribute('data-auto-available') === 'true';
 		manual = ! automatic;
 	}
 	uiu.$visible_qs('.settings_court_manual', manual);
@@ -294,6 +303,11 @@ function update(s) {
 	_settings_selects.forEach(function(name) {
 		var $select = $('.settings [name="' + name + '"]');
 		$select.val(s.settings[name]);
+		if(name === 'style' && s.settings[name] == 'hidden') {
+			$select[0].disabled = true;
+		} else {
+			$select[0].disabled = false;
+		}
 	});
 
 	update_court(s);
@@ -383,7 +397,7 @@ function on_change(s, name) {
 	case 'fullscreen_ask':
 		fullscreen.update_fullscreen_button();
 		break;
-	case 'settings_style':
+	case 'style':
 		on_mode_change(s);
 		break;
 	}
@@ -503,7 +517,7 @@ function get_mode(s) {
 }
 
 function get_settings_style(s) {
-	var res = s.settings.settings_style;
+	var res = s.settings.style;
 	if (res === 'default') {
 		var netw = network.get_netw();
 		res = (netw && netw.limited_ui) ? 'clean' : 'complete';
@@ -532,7 +546,7 @@ function on_mode_change(s) {
 				} else {
 					if (styles) {
 						visible = false;
-					} else if ((settings_style === 'clean') || (settings_style === 'focus')) {
+					} else if ((settings_style === 'clean') || (settings_style === 'focus')|| (settings_style === 'hidden')) {
 						visible = false;
 					} // else: complete, everything visible
 				}
@@ -591,6 +605,7 @@ if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var network = require('./network');
 	var refmode_client_ui = null; // break cycle, should be require('./refmode_client_ui');
 	var refmode_referee_ui = null; // break cycle, should be require('./refmode_referee_ui');
+	var resultmode = require('./resultmode');
 	var render = require('./render');
 	var report_problem = require('./report_problem');
 	var scoresheet = require('./scoresheet');
