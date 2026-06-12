@@ -3685,7 +3685,28 @@ function _extract_timer_state(s, match) {
 
 var active_timers = [];
 
+function remove_active_timer(tobj) {
+	var idx = active_timers.indexOf(tobj);
+	if (idx >= 0) {
+		active_timers.splice(idx, 1);
+	}
+}
+
+function abort_timers_for_parent(parent) {
+	active_timers.slice().forEach(function(tobj) {
+		if (tobj.parent !== parent) {
+			return;
+		}
+		if (tobj.timeout) {
+			clearTimeout(tobj.timeout);
+		}
+		remove_active_timer(tobj);
+	});
+}
+
 function show_match_meta(timer_state, parent, default_color, exigent_color, match_meta) {
+	abort_timers_for_parent(parent);
+
 	if(!match_meta){
 		match_meta = [""];
 	}
@@ -3828,7 +3849,7 @@ function show_match_meta(timer_state, parent, default_color, exigent_color, matc
 	let timerFontSize = '19vh';
 	var el = uiu.el(parent, 'div', {style: ('font-size:' + timerFontSize + '; line-height:1; color:' + default_color +'; white-space:nowrap; flex:0 0 auto;')}, '\xa0'+tv.str);
 	timer_alternative_text.push([el, timerFontSize, {visual_height: 0.95}]);
-	var tobj = {};
+	var tobj = { parent: parent };
 	active_timers.push(tobj);
 
 	var update = function() {
@@ -3845,6 +3866,7 @@ function show_match_meta(timer_state, parent, default_color, exigent_color, matc
 			tobj.timeout = setTimeout(update, tv.next);
 		} else {
 			tobj.timeout = null;
+			remove_active_timer(tobj);
 		}
 		
 		if (!visible) {
@@ -3866,6 +3888,7 @@ function abort_timers() {
 			clearTimeout(tobj.timeout);
 		}
 	});
+	active_timers = [];
 }
 
 function render_2court(s, container, event, colors) {
