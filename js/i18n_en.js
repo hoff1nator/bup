@@ -60,6 +60,7 @@ var i18n_en = {
 'network:resume match': 'Resume match at {score}',
 'network:in progress': 'Match {match} has already been started',
 'network:match finished': 'Match {match} already finished ({score})!',
+'network:match finished short': 'Match finished',
 'network:fetching courts': 'Fetching court list ...',
 'network:leave match?': 'Match result not transmitted yet. Leave match without transmitting result?',
 

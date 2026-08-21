@@ -101,6 +101,35 @@ function _score_text(network_score) {
 	}).join(' ');
 }
 
+function _match_finished(match) {
+	if (!match) {
+		return false;
+	}
+	if (match.end_ts || match.end_timestamp) {
+		return true;
+	}
+	if (typeof match.team1_won === 'boolean') {
+		return true;
+	}
+	if (match.network_score && match.setup) {
+		try {
+			var winner = calc.match_winner(match.setup, match.network_score);
+			return winner === 'left' || winner === 'right';
+		} catch (e) {
+			report_problem.silent_error('Failed to determine finished match state: ' + e.toString());
+		}
+	}
+	return false;
+}
+
+function _render_match_finished_label(s, parent, match) {
+	if (_match_finished(match)) {
+		uiu.el(parent, 'span', {
+			'class': 'setup_network_match_finished',
+		}, s._('network:match finished short'));
+	}
+}
+
 function calc_team0_left(match) {
 	if (match.network_team0_left !== undefined) {
 		return match.network_team0_left;
@@ -325,6 +354,7 @@ function _render_btsh_unassigned_court_picker(s, event, container, netw) {
 			uiu.el(body, 'span', {
 				'class': 'setup_network_match_score',
 			}, score_text ? score_text : '\xA0');
+			_render_match_finished_label(s, body, match);
 		}
 
 		click.on(btn, function() {
@@ -446,6 +476,7 @@ function ui_render_matchlist(s, event) {
 		uiu.el(btn, 'span', {
 			'class': 'setup_network_match_score',
 		}, (score_text ? score_text : '\xA0'));
+		_render_match_finished_label(s, btn, match);
 
 		click.on(btn, function() {
 			enter_match(match);

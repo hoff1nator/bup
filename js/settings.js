@@ -181,6 +181,7 @@ function show() {
 	match_storage.ui_init();
 	uiu.$visible_qs('.ingame_options', state.initialized);
 	uiu.$visible_qs('.ingame_options_refmode', state.ui.referee_mode);
+	update_ingame_options(state);
 }
 
 function hide(force, skip_state) {
@@ -201,6 +202,11 @@ function hide(force, skip_state) {
 	if (!skip_state) {
 		control.set_current(state);
 	}
+}
+
+function update_ingame_options(s) {
+	var edit_locked = !!(s && s.match && s.match.finish_confirmed);
+	uiu.$visible_qs('.go_editmode_button', !edit_locked);
 }
 
 function update_court(s) {
@@ -322,6 +328,8 @@ function update_court_settings(s) {
 }
 
 function update(s) {
+	update_ingame_options(s);
+
 	_settings_checkboxes.forEach(function(name) {
 		var $box = $('.settings [name="' + name + '"]');
 		$box.prop('checked', s.settings[name]);

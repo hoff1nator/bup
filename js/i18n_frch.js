@@ -58,6 +58,7 @@ var i18n_frch = {
 'network:resume match': 'Reprendre le jeu à {score}',
 'network:in progress': 'Le jeu {match} a déjà été lancé',
 'network:match finished': 'Le jeux {match} est déjà terminé ({score})!',
+'network:match finished short': 'Jeu terminé',
 'network:fetching courts': 'Télécharger la liste des terrains ...',
 
 'editevent:link': 'Modifier événement',

@@ -12,7 +12,14 @@ function ui_visible(val) {
 	}
 }
 
+function is_locked(s) {
+	return !!(s && s.match && s.match.finish_confirmed);
+}
+
 function enter() {
+	if (is_locked(state)) {
+		return false;
+	}
 	ui_visible(true);
 	state.ui.editmode_active = true;
 
@@ -24,6 +31,7 @@ function enter() {
 	uiu.$visible_qsa('#score td.score span', false);
 	uiu.addClass_qs('#game', 'editmode');
 	update_ui(state);
+	return true;
 }
 
 function leave() {
@@ -45,7 +53,9 @@ function ui_init() {
 		if (state.ui.editmode_active) {
 			leave();
 		} else {
-			enter();
+			if (!enter()) {
+				return;
+			}
 		}
 		settings.hide();
 	});
@@ -179,6 +189,10 @@ function update_ui(s) {
 	if (!state.ui.editmode_active) {
 		return;
 	}
+	if (is_locked(s)) {
+		leave();
+		return;
+	}
 
 	hide_inputs((s.game.team1_left === null) ? 0 : (s.match.finished_games.length + 1));
 
@@ -270,6 +284,7 @@ function make_fix_time_ui(container) {
 
 return {
 	enter: enter,
+	is_locked: is_locked,
 	leave: leave,
 	ui_init: ui_init,
 	change_score: change_score,

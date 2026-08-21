@@ -123,6 +123,13 @@ button > .loading-icon {
 	font-weight: bold;
 	margin-top: 10px;
 }
+.setup_network_match_finished {
+	display: block;
+	text-align: center;
+	color: #c14949;
+	font-weight: bold;
+	margin-top: 4px;
+}
 .setup_network_umpire_name {
 	color: #c14949;
 }

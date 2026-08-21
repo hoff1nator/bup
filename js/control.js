@@ -208,6 +208,10 @@ function on_press(press, s) {
 		s = state;
 	}
 
+	if (s.match && s.match.finish_confirmed) {
+		return;
+	}
+
 	var se = s.settings;
 	if (se && se.court_id != 'referee') {
 		if (se.umpire_name && (se.umpire_name !== s.match.umpire_name)) {
