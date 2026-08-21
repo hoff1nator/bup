@@ -16,6 +16,8 @@ function btsh(baseurl, tournament_key) {
 		return '/ws/bup';
 	})();
 	var reconnect_timeout = 1000;
+	var reconnect_timer = null;
+	var bts_connection_error_active = false;
 	var bts_update_callback = null;
 	var bts_update_courts_callback = null;
 	var btsh_court_selection_pending = null;
@@ -352,26 +354,50 @@ function btsh(baseurl, tournament_key) {
 	function connect() {
 		try {
 			if (ws == null) {
-				ws = new WebSocket(construct_url(WS_PATH), 'bts-bup');
+				var next_ws = new WebSocket(construct_url(WS_PATH), 'bts-bup');
+				ws = next_ws;
 				ws.sendmsg = ws_sendmsg;
 				ws.onopen = function () {
-					network.errstate('btsh.score', null);
+					if (ws !== next_ws) {
+						return;
+					}
+					if (reconnect_timer !== null) {
+						clearTimeout(reconnect_timer);
+						reconnect_timer = null;
+					}
+					clear_bts_not_reachable();
 					reload_match_information();
 					send_device_info();
 					match_storage.remove_all(12);
 				};
 				ws.onmessage = handle_message;
 				ws.onclose = function () {
-					ws = null;
-					send_bts_not_reachable();
-					setTimeout(connect, reconnect_timeout);
+					if (ws === next_ws) {
+						ws = null;
+					}
+					schedule_reconnect();
 				};
 			}
 		} catch (e) {
 			ws = null;
-			send_bts_not_reachable();
-			setTimeout(connect, reconnect_timeout);
+			schedule_reconnect();
 		}
+	}
+
+	function schedule_reconnect() {
+		if (reconnect_timer !== null) {
+			return;
+		}
+		reconnect_timer = setTimeout(function () {
+			reconnect_timer = null;
+			if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+				ws = null;
+				connect();
+			}
+			if (!ws || ws.readyState !== WebSocket.OPEN) {
+				send_bts_not_reachable();
+			}
+		}, reconnect_timeout);
 	}
 
 	function switch_ws_protocol(next_path) {
@@ -408,24 +434,42 @@ function btsh(baseurl, tournament_key) {
 	}
 
 	async function ws_sendmsg(msg) {
-		
-		waitForSocketConnection(ws, () => {
+		var socket = ws;
+		waitForSocketConnection(socket, () => {
 			const msg_json = JSON.stringify(msg);
-			ws.send(msg_json);
+			try {
+				socket.send(msg_json);
+				clear_bts_not_reachable();
+			} catch (e) {
+				if (ws === socket) {
+					ws = null;
+				}
+				send_bts_not_reachable();
+				schedule_reconnect();
+			}
 		});
 
 	}
 
 	// Make the function wait until the connection is made...
-	function waitForSocketConnection(socket, callback){
+	function waitForSocketConnection(socket, callback, started_ts){
+		started_ts = started_ts || Date.now();
 	    setTimeout(
 	        function () {
-	            if (socket.readyState === 1) {
+	            if (!socket || socket.readyState === WebSocket.CLOSED || socket.readyState === WebSocket.CLOSING) {
+	                ws = null;
+	                connect();
+	                socket = ws;
+	            }
+	            if (socket && socket.readyState === WebSocket.OPEN) {
 	                if (callback != null){
 	                    callback();
 	                }
+	            } else if (Date.now() - started_ts < ((state && state.settings && state.settings.network_timeout) || 1000)) {
+	                waitForSocketConnection(socket, callback, started_ts);
 	            } else {
-	                waitForSocketConnection(socket, callback);
+	                send_bts_not_reachable();
+	                schedule_reconnect();
 	            }
 
 	        }, 5); // wait 5 milisecond for the connection...
@@ -1393,6 +1437,7 @@ function btsh(baseurl, tournament_key) {
 	}
 
 	function send_bts_not_reachable() {
+		bts_connection_error_active = true;
 		if (bts_update_callback && bts_update_callback != null) {
 			var msg = state._('network:error:bts');
 			bts_update_callback({
@@ -1400,6 +1445,14 @@ function btsh(baseurl, tournament_key) {
 				msg: msg,
 			}, state, null);
 		}
+	}
+
+	function clear_bts_not_reachable() {
+		network.errstate('btsh.score', null);
+		if (bts_connection_error_active && bts_update_callback && bts_update_callback != null && state && state.bts_event) {
+			bts_update_callback(null, state, state.bts_event || null);
+		}
+		bts_connection_error_active = false;
 	}
 
 	return {
