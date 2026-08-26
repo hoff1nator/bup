@@ -29,6 +29,8 @@ var ALL_STYLES = [
 	'tournament_overview',
 	'tournament_overview_dm',
 	'andre',
+	'ostbek1',
+	'ostbek2',
 ];
 var MULTI_COURT_STYLES = [
 	'2court',
@@ -41,6 +43,8 @@ var MULTI_COURT_STYLES = [
 	'top+list',
 	'tournament_overview',
 	'tournament_overview_dm',
+	'ostbek1',
+	'ostbek2',
 ];
 var FIELDLESS_MULTI_COURT_STYLES = [
 	'greyish',
@@ -916,6 +920,325 @@ function render_tournament_overview_dm(s, container, event) {
 			
 	});
 }
+	function _ostbek_court_svg(landscape) {
+		// Margins 3 units (30cm) on each side.
+		// Doubles boundary:  x 3..58, y 3..131
+		// Singles sidelines: x=7.6 and x=53.4  (0.46m in from doubles)
+		// Net:               y=67               (centre)
+		// Short service:     y=47.2 and y=86.8  (1.98m from net)
+		// Long service (dbl):y=10.6 and y=123.4 (0.76m from back)
+		// Centre line:       x=30.5, between short service lines only
+		function _p(x, y) {
+			// Swap axes for landscape: court is rotated so left side = far end
+			return landscape ? ((134 - y) + ' ' + x) : (x + ' ' + y);
+		}
+		function _r(x, y, w, h) {
+			if (landscape) return 'x="' + (134 - y - h) + '" y="' + x + '" width="' + h + '" height="' + w + '"';
+			return 'x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '"';
+		}
+		function _l(x1, y1, x2, y2) {
+			var a = _p(x1, y1).split(' '), b = _p(x2, y2).split(' ');
+			return 'x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '"';
+		}
+		var vb = landscape ? '0 0 134 61' : '0 0 61 134';
+		return (
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb + '" class="ostbek_court_svg">' +
+			'<rect ' + _r(0, 0, 61, 134) + ' fill="#fff"/>' +
+			'<rect ' + _r(3, 3, 55, 128) + ' fill="none" stroke="#c21717" stroke-width="0.7"/>' +
+			'<line ' + _l(7.6, 3, 7.6, 131) + ' stroke="#c21717" stroke-width="0.5"/>' +
+			'<line ' + _l(53.4, 3, 53.4, 131) + ' stroke="#c21717" stroke-width="0.5"/>' +
+			'<line ' + _l(3, 67, 58, 67) + ' stroke="#c21717" stroke-width="1.0"/>' +
+			'<line ' + _l(3, 47.2, 58, 47.2) + ' stroke="#c21717" stroke-width="0.5"/>' +
+			'<line ' + _l(3, 86.8, 58, 86.8) + ' stroke="#c21717" stroke-width="0.5"/>' +
+			'<line ' + _l(3, 10.6, 58, 10.6) + ' stroke="#c21717" stroke-width="0.5"/>' +
+			'<line ' + _l(3, 123.4, 58, 123.4) + ' stroke="#c21717" stroke-width="0.5"/>' +
+			'<line ' + _l(30.5, 10.6, 30.5, 47.2) + ' stroke="#c21717" stroke-width="0.5"/>' +
+			'<line ' + _l(30.5, 86.8, 30.5, 123.4) + ' stroke="#c21717" stroke-width="0.5"/>' +
+			'</svg>'
+		);
+	}
+
+	function _ostbek_namestr(setup, team_idx) {
+		var team = setup.teams && setup.teams[team_idx];
+		if (!team || !team.players || !team.players.length) return '';
+		if (setup.is_doubles && team.players.length > 1) {
+			return team.players[0].name + ' / ' + team.players[1].name;
+		}
+		return team.players[0].name;
+	}
+
+	function _ostbek_scorestr(match) {
+		if (!match) return '';
+		var ns = match.network_score || [];
+		return ns.map(function (g) {
+			return g ? g[0] + ':' + g[1] : '';
+		}).filter(Boolean).join('  ');
+	}
+
+	// Split a full name into [first, last] at the last space.
+	// If there is no space, returns ['', name] so last name is the single line.
+	function _ostbek_name_lines(text) {
+		if (!text) return ['', ''];
+		var i = text.lastIndexOf(' ');
+		if (i < 0) return ['', text];
+		return [text.slice(0, i), text.slice(i + 1)];
+	}
+
+	// Add a name element (one or two lines) to a strip container.
+	function _ostbek_fill_strip(strip, text) {
+		var lines = _ostbek_name_lines(text);
+		var longest = Math.max(lines[0].length, lines[1].length);
+		var scale = Math.min(1, 14 / Math.max(longest, 1));
+		if (lines[0]) {
+			var l1 = uiu.el(strip, 'div', 'ostbek_namestrip_line', lines[0]);
+			l1.style.fontSize = scale.toFixed(3) + 'em';
+		}
+		var l2 = uiu.el(strip, 'div', 'ostbek_namestrip_line', lines[1]);
+		l2.style.fontSize = scale.toFixed(3) + 'em';
+	}
+
+	// Portrait singles: strip auto-sized to text, centred at zone_pct.
+	function _ostbek_name_strip_portrait(card, text, zone_pct) {
+		var strip = uiu.el(card, 'div', 'ostbek_namestrip');
+		strip.style.top       = zone_pct;
+		strip.style.left      = '50%';
+		strip.style.transform = 'translate(-50%, -50%)';
+		_ostbek_fill_strip(strip, text);
+	}
+
+	// Portrait doubles: pair container auto-sized; each strip auto-sizes to its own text.
+	function _ostbek_name_pair_portrait(card, textA, textB, zone_pct) {
+		var pair = uiu.el(card, 'div', 'ostbek_namepair');
+		pair.style.top       = zone_pct;
+		pair.style.left      = '50%';
+		pair.style.transform = 'translate(-50%, -50%)';
+		var stripA = uiu.el(pair, 'div', 'ostbek_namestrip ostbek_namestrip_inner');
+		_ostbek_fill_strip(stripA, textA);
+		var stripB = uiu.el(pair, 'div', 'ostbek_namestrip ostbek_namestrip_inner');
+		_ostbek_fill_strip(stripB, textB);
+	}
+
+	// Landscape singles: strip auto-sized, centred at (horiz_pct, vert_pct).
+	function _ostbek_name_strip_landscape(card, text, horiz_pct, vert_pct) {
+		var strip = uiu.el(card, 'div', 'ostbek_namestrip');
+		strip.style.top       = vert_pct;
+		strip.style.left      = horiz_pct;
+		strip.style.transform = 'translate(-50%, -50%)';
+		_ostbek_fill_strip(strip, text);
+	}
+
+	// Landscape doubles: pair container auto-sized; each strip auto-sizes to its own text.
+	function _ostbek_name_pair_landscape(card, textA, textB, horiz_pct) {
+		var pair = uiu.el(card, 'div', 'ostbek_namepair');
+		pair.style.top       = '50%';
+		pair.style.left      = horiz_pct;
+		pair.style.transform = 'translate(-50%, -50%)';
+		var stripA = uiu.el(pair, 'div', 'ostbek_namestrip ostbek_namestrip_inner');
+		_ostbek_fill_strip(stripA, textA);
+		var stripB = uiu.el(pair, 'div', 'ostbek_namestrip ostbek_namestrip_inner');
+		_ostbek_fill_strip(stripB, textB);
+	}
+
+	function _ostbek_discipline_str(setup) {
+		var mname = setup.match_name || setup.eventsheet_id || '';
+		var disc;
+		if (!setup.is_doubles) {
+			disc = 'Einzel';
+		} else if (/(?:GD|XD)/i.test(mname)) {
+			disc = 'Mixed';
+		} else {
+			disc = 'Doppel';
+		}
+		var parts = [disc];
+		if (setup.event_name) parts.push(setup.event_name);
+		return parts.join(' ');
+	}
+
+	function _ostbek_court_card(parent, court, match, landscape, court_w, court_h) {
+		var cw = Math.round(court_w);
+		var ch = Math.round(court_h);
+		var short_side = Math.min(cw, ch);
+		var font = Math.round(short_side * 0.11);
+
+		var card = uiu.el(parent, 'div', 'ostbek_court_card');
+		card.style.width    = cw + 'px';
+		card.style.height   = ch + 'px';
+		card.style.fontSize = font + 'px';
+
+		var svg_wrap = uiu.el(card, 'div', 'ostbek_svg_wrap');
+		svg_wrap.innerHTML = _ostbek_court_svg(landscape);
+
+		var num_class = 'ostbek_court_num ' + (landscape ? 'ostbek_court_num_landscape' : 'ostbek_court_num_portrait');
+		var court_num = uiu.el(card, 'div', num_class);
+		var num_scale = landscape ? 0.19 : 0.25;
+		court_num.style.fontSize = (Math.round(short_side * num_scale) - 2) + 'px';
+		var court_label = String(court.label || court.court_id);
+		if (landscape) {
+			// Group consecutive letters and digits into separate lines (e.g. "WR" then "5")
+			var groups = court_label.match(/[A-Za-z]+|[0-9]+|[^A-Za-z0-9]+/g) || [];
+			groups.forEach(function(g) {
+				uiu.el(court_num, 'div', '', g);
+			});
+		} else {
+			court_num.textContent = court_label;
+		}
+
+		if (!match) return;
+
+		var setup = match.setup;
+
+		var disc_class = 'ostbek_discipline ' + (landscape ? 'ostbek_discipline_landscape' : 'ostbek_discipline_portrait');
+		var disc_el = uiu.el(card, 'div', disc_class);
+		disc_el.style.fontSize = Math.round(short_side * 0.09) + 'px';
+		var disc_str = _ostbek_discipline_str(setup);
+		if (landscape) {
+			// Each word on its own line
+			disc_str.split(' ').forEach(function(word) {
+				if (word) uiu.el(disc_el, 'div', '', word);
+			});
+		} else {
+			disc_el.textContent = disc_str;
+		}
+
+		if (!setup.is_doubles) {
+			var name0 = _ostbek_namestr(setup, 0);
+			var name1 = _ostbek_namestr(setup, 1);
+			if (!landscape) {
+				// Portrait/landscape zone centres: midpoint between
+			// doubles long service line and short service line
+			// y=10.6 (long svc) .. y=47.2 (short svc) → centre (10.6+47.2)/2/134 = 21.6%
+			// y=86.8 (short svc) .. y=123.4 (long svc) → centre (86.8+123.4)/2/134 = 78.4%
+				_ostbek_name_strip_portrait(card, name0, '21.6%');
+				_ostbek_name_strip_portrait(card, name1, '78.4%');
+			} else {
+				// x=10.6 .. x=47.2 → centre 21.6%
+				// x=86.8 .. x=123.4 → centre 78.4%
+				_ostbek_name_strip_landscape(card, name0, '21.6%', '50%');
+				_ostbek_name_strip_landscape(card, name1, '78.4%', '50%');
+			}
+		} else {
+			var t0p0 = _ostbek_player_str(setup, 0, 0);
+			var t0p1 = _ostbek_player_str(setup, 0, 1);
+			var t1p0 = _ostbek_player_str(setup, 1, 0);
+			var t1p1 = _ostbek_player_str(setup, 1, 1);
+			if (!landscape) {
+				// Portrait doubles: pair container centred at zone, players stacked inside
+				_ostbek_name_pair_portrait(card, t0p0, t0p1, '21.6%');
+				_ostbek_name_pair_portrait(card, t1p0, t1p1, '78.4%');
+			} else {
+				// Landscape doubles: pair container centred at zone, players stacked inside
+				_ostbek_name_pair_landscape(card, t0p0, t0p1, '21.6%');
+				_ostbek_name_pair_landscape(card, t1p0, t1p1, '78.4%');
+			}
+		}
+	}
+
+	function _ostbek_player_str(setup, team_idx, player_idx) {
+		var team = setup.teams && setup.teams[team_idx];
+		var player = team && team.players && team.players[player_idx];
+		return player ? player.name : '';
+	}
+
+	function _ostbek_court_by_num(courts, n) {
+		for (var i = 0; i < courts.length; i++) {
+			var label = String(courts[i].label || '');
+			var m = /([0-9]+)\s*$/.exec(label);
+			if (m && parseInt(m[1], 10) === n) return courts[i];
+		}
+		return null;
+	}
+
+	// Compute portrait court width W (px) so that:
+	//   - portrait row (n_portrait courts) and landscape row (n_landscape courts) have equal total width
+	//   - both rows + heading fit within the available container height
+	// R = 134/61 = court long/short aspect ratio
+	// Portrait SVG: W wide, W*R tall
+	// Landscape SVG: W*R wide, W tall
+	// Gap between courts in a row: g px
+	// Row gap (between the two rows): rg px
+	// Info area height per row: ih px (estimated)
+	function _ostbek_build(container, hall_name, portrait_nums, landscape_nums, event, reverse_order) {
+		var R = 134 / 61;
+		var MARGIN = 0.02;  // Reduced margin to fill more screen space
+		var PORTRAIT_GAP = 28;  // Slightly larger gap between portrait courts
+		var Np = portrait_nums.length;
+		var Nl = landscape_nums.length;
+
+		var AW = window.innerWidth * (1 - 2 * MARGIN);
+		var AH = window.innerHeight * (1 - 2 * MARGIN);
+
+		// W from portrait row filling AW
+		var W_portrait = (AW - (Np - 1) * PORTRAIT_GAP) / Np;
+
+		// W from landscape row fitting in AW (each landscape court is W*R wide)
+		var W_landscape = (AW - (Nl - 1) * PORTRAIT_GAP) / (Nl * R);
+
+		// W from height:
+		// heading (small) + landscape row (W tall) + gap + portrait row (W*R tall)
+		// More aggressive: use 98% of height, smaller heading estimate
+		var heading_height = 40;  // Fixed pixel height for heading
+		var row_gap = 8;  // Gap between the two rows
+		var W_height = (AH - heading_height - row_gap) / (1 + R);
+
+		var W = Math.min(W_portrait, W_landscape, W_height);
+		var courts = event.courts;
+
+		var wrap = uiu.el(container, 'div', 'ostbek_hall_wrap');
+		uiu.el(wrap, 'div', 'ostbek_hall_heading', hall_name);
+		var logo_club = uiu.el(wrap, 'img', 'ostbek_logo ostbek_logo_left');
+		logo_club.src = 'icons/ostbek_logo_club.png';
+		var logo_mascot = uiu.el(wrap, 'img', 'ostbek_logo ostbek_logo_right');
+		logo_mascot.src = 'icons/ostbek_logo_mascot.png';
+
+		// Portrait row width with larger gaps
+		var row_w = Math.round(Np * W + (Np - 1) * PORTRAIT_GAP);
+
+		// Landscape row: calculate gap to align outer edges with portrait row
+		// Total width available for gaps between landscape courts
+		var landscape_courts_width = Nl * W * R;
+		var landscape_gap = (row_w - landscape_courts_width) / (Nl - 1);
+
+		// Create landscape row
+		var create_landscape_row = function () {
+			var row_land = uiu.el(wrap, 'div', 'ostbek_row');
+			row_land.style.width = row_w + 'px';
+			row_land.style.gap = Math.round(landscape_gap) + 'px';
+			landscape_nums.forEach(function (n) {
+				var c = _ostbek_court_by_num(courts, n);
+				if (c) _ostbek_court_card(row_land, c, _match_by_court(event, c), true, W * R, W);
+			});
+		};
+
+		// Create portrait row
+		var create_portrait_row = function () {
+			var row_port = uiu.el(wrap, 'div', 'ostbek_row');
+			row_port.style.gap = PORTRAIT_GAP + 'px';
+			row_port.style.width = row_w + 'px';
+			portrait_nums.forEach(function (n) {
+				var c = _ostbek_court_by_num(courts, n);
+				if (c) _ostbek_court_card(row_port, c, _match_by_court(event, c), false, W, W * R);
+			});
+		};
+
+		// Render in order based on reverse_order flag
+		if (reverse_order) {
+			create_portrait_row();
+			create_landscape_row();
+		} else {
+			create_landscape_row();
+			create_portrait_row();
+		}
+	}
+
+	function render_ostbek1(s, container, event) {
+		_ostbek_build(container, 'Walter-Ruckert-Halle', [1, 2, 3, 4, 5, 6], [7, 8, 9], event);
+	}
+
+	function render_ostbek2(s, container, event) {
+		_ostbek_build(container, 'Sportforum', [10, 11, 12, 13, 14, 15], [16, 17], event, true);
+	}
+
+
 function render_castall(s, container, event, colors) {
 	if (!event.courts) {
 		uiu.el(container, 'div', 'error', 'Court information missing');
@@ -9522,6 +9845,8 @@ function update(err, s, event) {
 		streamcourt: render_streamcourt,
 		streamcourt_dm: render_streamcourt_dm,
 		streamteam: render_streamteam,
+		ostbek1: render_ostbek1,
+		ostbek2: render_ostbek2,
 	}[style];
 	if (ofunc) {
 		var o_colors = calc_colors(s.settings, event);

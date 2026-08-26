@@ -563,6 +563,8 @@ var i18n_de = {
 'displaymode|greyish': 'Gräulich',
 'displaymode|tournament_overview': 'Turnier-Übersicht',
 'displaymode|castall': 'Cast',
+'displaymode|ostbek1': 'Ostbek Halle 1 (Walter-Ruckert-Halle)',
+'displaymode|ostbek2': 'Ostbek Halle 2 (Sportforum)',
 'displaymode|bwfonlyplayers': 'BWF nur Spieler',
 'displaymode|onlyplayers': 'Nur Spieler',
 'displaymode|onlyscore': 'Nur Spielstand',

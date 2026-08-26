@@ -557,6 +557,8 @@ var i18n_en = {
 'displaymode|tournamentplayers': 'individual tournament players only',
 'displaymode|2court': '2 courts',
 'displaymode|castall': 'greenscreen (all courts)',
+'displaymode|ostbek1': 'Ostbek Hall 1 (Walter-Ruckert-Halle)',
+'displaymode|ostbek2': 'Ostbek Hall 2 (Sportforum)',
 'displaymode|andre': 'André',
 'displaymode|tim': 'Tim',
 'displaymode|greyish': 'Greyish',
