@@ -17,6 +17,7 @@ function btsh(baseurl, tournament_key) {
 	})();
 	var reconnect_timeout = 1000;
 	var reconnect_timer = null;
+	var _disconnect_since = null;
 	var bts_connection_error_active = false;
 	var bts_update_callback = null;
 	var bts_update_courts_callback = null;
@@ -351,6 +352,14 @@ function btsh(baseurl, tournament_key) {
 		return s.btsh_courts;
 	}
 
+	function _check_reload() {
+		if (_disconnect_since && (Date.now() - _disconnect_since >= 60000)) {
+			location.reload();
+			return true;
+		}
+		return false;
+	}
+
 	function connect() {
 		try {
 			if (ws == null) {
@@ -361,6 +370,7 @@ function btsh(baseurl, tournament_key) {
 					if (ws !== next_ws) {
 						return;
 					}
+					_disconnect_since = null;
 					if (reconnect_timer !== null) {
 						clearTimeout(reconnect_timer);
 						reconnect_timer = null;
@@ -375,16 +385,21 @@ function btsh(baseurl, tournament_key) {
 					if (ws === next_ws) {
 						ws = null;
 					}
+					if (!_disconnect_since) _disconnect_since = Date.now();
 					schedule_reconnect();
 				};
 			}
 		} catch (e) {
 			ws = null;
+			if (!_disconnect_since) _disconnect_since = Date.now();
 			schedule_reconnect();
 		}
 	}
 
 	function schedule_reconnect() {
+		if (_check_reload()) {
+			return;
+		}
 		if (reconnect_timer !== null) {
 			return;
 		}
