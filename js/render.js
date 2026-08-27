@@ -282,10 +282,35 @@ function ui_court_str(s) {
 
 function ui_render(s) {
 	var dialog_active = false;  // Is there anything to pick in the bottom?
-	var scorecard_active = scorecard.is_active(s);
+	var kiosk_active = kiosk.is_active(s);
+	var scorecard_active = scorecard.is_active(s) && !kiosk_active;
 
 	if (!s.initialized) {
 		// Nothing to render really
+		return;
+	}
+
+	uiu.$visible_qs('.kiosk_container', kiosk_active);
+	if (kiosk_active) {
+		uiu.setClass_qs('#game', 'scorecard_mode', true);
+		uiu.$visible_qs('.scorecard_container', false);
+		uiu.$visible_qs('#court', false);
+		uiu.$visible_qs('#score', false);
+		uiu.$visible_qs('#left_score', false);
+		uiu.$visible_qs('#right_score', false);
+		uiu.$visible_qs('#love-all-dialog', false);
+		uiu.$visible_qs('#postmatch-leave-dialog', false);
+		uiu.$visible_qs('#postmatch-confirm-dialog', false);
+		uiu.$visible_qs('#postgame-confirm-dialog', false);
+		uiu.$visible_qs('#postinterval-confirm-dialog', false);
+		uiu.$visible_qs('#suspension-resume-dialog', false);
+		uiu.$visible_qs('#injury-resume-dialog', false);
+		uiu.$visible_qs('#pick_side', false);
+		uiu.$visible_qs('#pick_server', false);
+		uiu.$visible_qs('#pick_receiver', false);
+		uiu.$visible_qs('#pronunciation', false);
+		timer.remove();
+		kiosk.render_ui(s);
 		return;
 	}
 
@@ -548,6 +573,7 @@ if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var control = require('./control');
 	var court = require('./court');
 	var editmode = require('./editmode');
+	var kiosk = require('./kiosk');
 	var pronunciation = require('./pronunciation');
 	var scorecard = require('./scorecard');
 	var timer = require('./timer');

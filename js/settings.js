@@ -447,6 +447,7 @@ function on_change(s, name) {
 	case 'style':
 	case 'tablet_mode':
 		scorecard.on_settings_change(s);
+		kiosk.on_settings_change(s);
 		on_mode_change(s);
 		render.show();
 		render.ui_render(s);
@@ -643,6 +644,7 @@ if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var displaymode = require('./displaymode');
 	var fullscreen = require('./fullscreen');
 	var i18n = require('./i18n');
+	var kiosk = require('./kiosk');
 	var match_storage = require('./match_storage');
 	var network = require('./network');
 	var refmode_client_ui = null; // break cycle, should be require('./refmode_client_ui');

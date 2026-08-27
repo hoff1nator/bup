@@ -36,6 +36,7 @@ function ui_init() {
 	timer.ui_init();
 	control.ui_init();
 	scorecard.ui_init();
+	kiosk.ui_init();
 	startmatch.ui_init();
 	settings.ui_init(state);
 	eventsheet.ui_init();
@@ -101,6 +102,7 @@ if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var i18n = require('./i18n');
 	var importexport = require('./importexport');
 	var key_utils = require('./key_utils');
+	var kiosk = require('./kiosk');
 	var network = require('./network');
 	var order = require('./order');
 	var p2p = require('./p2p');

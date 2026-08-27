@@ -1,0 +1,94 @@
+.kiosk_container {
+	width: min(132vh, calc(100vw - 2px));
+	height: min(60vh, calc((100vw - 2px) * 60 / 132));
+	margin: 0 auto;
+	padding: 2vh 3vh 2.5vh;
+	box-sizing: border-box;
+	position: relative;
+	background: #111;
+	color: #eee;
+	display: flex;
+	flex-direction: column;
+	gap: 1.4vh;
+	border-radius: 2vh;
+}
+
+.kiosk_header {
+	text-align: center;
+}
+
+.kiosk_title {
+	font-size: 4.8vh;
+	font-weight: 700;
+	line-height: 1.05;
+	padding-bottom: 0.8vh;
+	margin-bottom: 0.8vh;
+}
+
+.kiosk_meta {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 1.5vh;
+	font-size: 2vh;
+	color: #bbb;
+}
+
+.kiosk_meta_label {
+	color: #888;
+	margin-right: 0.4vh;
+}
+
+.kiosk_presence_headline {
+	font-size: 3.2vh;
+	font-weight: bold;
+	color: #f9a825;
+	text-align: center;
+	margin-top: 2vh;
+}
+
+.kiosk_presence_container {
+	flex: 1 1 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2vh;
+	justify-content: center;
+}
+
+.kiosk_presence_button {
+	width: 100%;
+	padding: 3vh;
+	font-size: 3.2vh;
+	font-weight: bold;
+	background: #16213e;
+	color: #eee;
+	border: 0.2vh solid #555;
+	border-radius: 1.2vh;
+	cursor: pointer;
+	transition: background 0.2s, border-color 0.2s, color 0.2s;
+	word-break: break-word;
+}
+
+.kiosk_presence_button:hover:not(:disabled) {
+	background: #1e2d50;
+	border-color: #888;
+}
+
+.kiosk_presence_button.kiosk_presence_confirmed {
+	background: #0d2818;
+	border-color: #4caf50;
+	color: #4caf50;
+	cursor: default;
+}
+
+.kiosk_fullscreen_button {
+	align-self: center;
+	margin-top: 1vh;
+	padding: 1vh 2.5vh;
+	font-size: 1.8vh;
+	background: transparent;
+	color: #888;
+	border: 0.15vh solid #555;
+	border-radius: 1vh;
+	cursor: pointer;
+}

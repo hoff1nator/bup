@@ -553,6 +553,13 @@ function match_opened(s) {
 	}
 }
 
+function send_presence_update(match_id, team_presence) {
+	var netw = get_netw();
+	if (netw && netw.push_service && typeof netw.send_presence_update === 'function') {
+		netw.send_presence_update(match_id, team_presence);
+	}
+}
+
 // Returns a callback to be called when the updates are no longer required.
 // cb gets called with (err, s, event); s is NOT updated implicitly
 // calc_timeout is called with s and must return immediately the timeout or the string 'abort'
@@ -1042,6 +1049,7 @@ return {
 	resync: resync,
 	score_transmitted: score_transmitted,
 	send_press: send_press,
+	send_presence_update: send_presence_update,
 	subscribe: subscribe,
 	supports_order: supports_order,
 	ui_init: ui_init,

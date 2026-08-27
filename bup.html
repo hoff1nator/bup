@@ -16,6 +16,7 @@
 	<link rel="stylesheet" href="css/court.css" />
 	<link rel="stylesheet" href="css/score.css" />
 	<link rel="stylesheet" href="css/scorecard.css" />
+	<link rel="stylesheet" href="css/kiosk.css" />
 	<link rel="stylesheet" href="css/timer.css" />
 	<link rel="stylesheet" href="css/network.css" />
 	<link rel="stylesheet" href="css/login.css" />
@@ -139,6 +140,23 @@
 		</div>
 		<div class="scorecard_status"></div>
 	</div>
+</div>
+
+<div class="kiosk_container default-invisible">
+	<div class="kiosk_header">
+		<div class="kiosk_title" data-i18n="kiosk:title"></div>
+		<div class="kiosk_meta">
+			<div class="kiosk_meta_item"><span class="kiosk_meta_label" data-i18n="kiosk:meta:competition"></span><span class="kiosk_meta_value kiosk_meta_competition"></span></div>
+			<div class="kiosk_meta_item"><span class="kiosk_meta_label" data-i18n="kiosk:meta:round"></span><span class="kiosk_meta_value kiosk_meta_round"></span></div>
+			<div class="kiosk_meta_item"><span class="kiosk_meta_label" data-i18n="kiosk:meta:court"></span><span class="kiosk_meta_value kiosk_meta_court"></span></div>
+		</div>
+	</div>
+	<div class="kiosk_presence_headline" data-i18n="kiosk:presence_headline"></div>
+	<div class="kiosk_presence_container">
+		<button type="button" class="kiosk_presence_button" data-team-id="0"></button>
+		<button type="button" class="kiosk_presence_button" data-team-id="1"></button>
+	</div>
+	<button type="button" class="kiosk_fullscreen_button" data-i18n="kiosk:fullscreen"></button>
 </div>
 
 <div class="network_desync_container default-invisible">
@@ -733,6 +751,7 @@ text.team1 {
 <script src="js/login.js"></script>
 <script src="js/key_storage.js"></script>
 <script src="js/key_utils.js"></script>
+<script src="js/kiosk.js"></script>
 <script src="js/liveaw.js"></script>
 <script src="js/jticker.js"></script>
 <script src="js/match_storage.js"></script>

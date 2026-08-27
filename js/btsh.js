@@ -317,6 +317,14 @@ function btsh(baseurl, tournament_key) {
 		ws_send({ type: 'command_done', tournament_key: tournament_key, wait_for_command: command})
 	}
 
+	async function send_presence_update(match_id, team_presence) {
+		ws_send(Object.assign({
+			type: 'presence_update',
+			tournament_key: tournament_key,
+			match_id: match_id,
+		}, team_presence));
+	}
+
 	function _panel_settings_payload() {
 		return Object.assign({}, state.settings, {
 			devicemode: settings.get_mode(state) === 'display' ? 'display' : 'umpire',
@@ -1484,6 +1492,7 @@ function btsh(baseurl, tournament_key) {
 		subscribe: subscribe,
 		match_opened: match_opened,
 		reload_match_information: reload_match_information,
+		send_presence_update: send_presence_update,
 	};
 }
 
