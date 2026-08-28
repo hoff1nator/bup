@@ -92,3 +92,34 @@
 	border-radius: 1vh;
 	cursor: pointer;
 }
+
+/* Whenever the attendance check or the dark scorecard is showing, remove
+   the page's own (light) background so no white strip shows around the
+   boxed dark container. */
+body.dark_kiosk_theme {
+	background: #111;
+}
+
+/* Shown in place of the normal browse-a-match settings screen for
+   scorecard_with_attendance tablets while their assigned court has no
+   on_court match yet - network.js enters the next match automatically the
+   moment one is called, so this never needs a tap. */
+.kiosk_waiting_container {
+	width: min(132vh, calc(100vw - 2px));
+	height: min(60vh, calc((100vw - 2px) * 60 / 132));
+	margin: 0 auto;
+	padding: 2vh 3vh 2.5vh;
+	box-sizing: border-box;
+	background: #111;
+	color: #888;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 2vh;
+}
+
+.kiosk_waiting_message {
+	font-size: 3.2vh;
+	font-weight: bold;
+	text-align: center;
+}

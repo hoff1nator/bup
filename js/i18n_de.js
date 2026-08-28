@@ -254,6 +254,7 @@ var i18n_de = {
 'kiosk:meta:court': 'Feld',
 'kiosk:presence_headline': 'Spieler anwesend',
 'kiosk:fullscreen': 'Vollbild',
+'kiosk:waiting': 'Warte auf nächstes Spiel',
 'settings:scoring_format|2x21+11': '2x21, 3. Satz bis 11',
 'settings:scoring_format|5x11_15': 'BWF 2016 Experiment Option 1 (5x11 bis max. 15)',
 'settings:scoring_format|5x11_15^90': 'Bundesliga 2017- (5x11 bis max. 15, 90s Pause)',

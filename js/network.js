@@ -383,6 +383,24 @@ function update_matchlist_title(s, event) {
 	}
 }
 
+// scorecard_with_attendance is a kiosk mode - the tablet's own dark waiting
+// screen (settings.js) takes the place of the normal browse-and-tap match
+// list, and whichever match the assigned court currently has on_court gets
+// entered automatically, so nobody has to tap it.
+function _kiosk_on_court_match(s, event) {
+	var court_id = s && s.settings && s.settings.court_id;
+	if (!court_id || court_id === 'referee' || !event || !event.matches) {
+		return null;
+	}
+	return event.matches.find(function(match) {
+		return match && match.setup && match.setup.court_id === court_id && match.setup.now_on_court;
+	}) || null;
+}
+
+function _kiosk_match_already_entered(s, match) {
+	return !!(match && s && s.initialized && s.metadata && String(s.metadata.id) === String(match.setup.match_id));
+}
+
 function ui_render_matchlist(s, event) {
 	var container = uiu.qs('#setup_network_matches');
 	uiu.empty(container); // TODO better transition if we're updating?
@@ -390,6 +408,14 @@ function ui_render_matchlist(s, event) {
 
 	if (_btsh_unassigned_court_picker_enabled(s, netw)) {
 		return _render_btsh_unassigned_court_picker(s, event, container, netw);
+	}
+
+	if (s.settings && s.settings.tablet_mode === 'scorecard_with_attendance') {
+		var on_court_match = _kiosk_on_court_match(s, event);
+		if (on_court_match && !_kiosk_match_already_entered(s, on_court_match)) {
+			enter_match(on_court_match);
+		}
+		return;
 	}
 
 	update_matchlist_title(s, event);

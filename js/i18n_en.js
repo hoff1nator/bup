@@ -252,6 +252,7 @@ var i18n_en = {
 'kiosk:meta:court': 'Court',
 'kiosk:presence_headline': 'Players Reporting Present',
 'kiosk:fullscreen': 'Fullscreen',
+'kiosk:waiting': 'Waiting for next match',
 'settings:scoring_format|2x21+11': '2x21, 3rd game until 11',
 'settings:scoring_format|5x11_15': 'BWF 2016 Experiment Option 1 (5x11 until max. 15)',
 'settings:scoring_format|5x11_15^90': 'German Bundesliga 2017 (5x11 until max. 15, 90s intervals)',

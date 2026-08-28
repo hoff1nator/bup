@@ -284,10 +284,21 @@ function ui_render(s) {
 	var dialog_active = false;  // Is there anything to pick in the bottom?
 	var kiosk_active = kiosk.is_active(s);
 	var scorecard_active = scorecard.is_active(s) && !kiosk_active;
+	var dark_kiosk_theme = kiosk_active || (scorecard_active && s.settings && s.settings.tablet_mode === 'scorecard_with_attendance');
 
 	if (!s.initialized) {
 		// Nothing to render really
 		return;
+	}
+
+	// Neither the attendance check nor the dark scorecard need the normal
+	// undo/exception/shuttle/settings button bars - both are unattended
+	// kiosk screens, and leaving that chrome visible also left a
+	// light-themed strip showing behind/around the dark box.
+	uiu.$visible_qs('.topleft_buttons', !dark_kiosk_theme);
+	uiu.$visible_qs('.topright_buttons', !dark_kiosk_theme);
+	if (document.body) {
+		document.body.classList.toggle('dark_kiosk_theme', dark_kiosk_theme);
 	}
 
 	uiu.$visible_qs('.kiosk_container', kiosk_active);

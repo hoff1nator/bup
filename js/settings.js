@@ -157,6 +157,19 @@ function hide_refereemode() {
 	uiu.$visible_qs('#settings_wrapper', false);
 }
 
+function _is_kiosk_waiting_mode(s) {
+	// Only takes over once a court is actually assigned - with no court_id
+	// yet, fall through to the normal settings screen so the existing
+	// "pick your court" flow (network.js's unassigned-court picker) still
+	// works for a tablet's one-time setup.
+	return !!(
+		s && s.settings &&
+		s.settings.tablet_mode === 'scorecard_with_attendance' &&
+		get_mode(s) === 'umpire' &&
+		s.settings.court_id && s.settings.court_id !== 'referee'
+	);
+}
+
 var _network_hide_cb = null;
 function show() {
 	if (state && state.settings && state.settings.neversettings) {
@@ -169,6 +182,25 @@ function show() {
 	control.set_current(state);
 	scoresheet.hide();
 	stats.hide();
+
+	// scorecard_with_attendance is a locked-down kiosk mode: no browsing a
+	// match list, no manual-entry form, no general settings chrome - just
+	// a dark "waiting for next match" placeholder while network.js's match
+	// subscription (still started below) watches for the next on_court
+	// match and enters it automatically (see ui_render_matchlist).
+	if (_is_kiosk_waiting_mode(state)) {
+		uiu.$visible_qs('.kiosk_waiting_container', true);
+		if (document.body) {
+			document.body.classList.add('dark_kiosk_theme');
+		}
+		if (network.is_enabled()) {
+			_network_hide_cb = network.ui_list_matches(state, true);
+		}
+		bupui.esc_stack_push(function() {
+			hide();
+		});
+		return;
+	}
 
 	uiu.$visible_qs('#settings_wrapper', true);
 	var net_enabled = network.is_enabled();
@@ -202,6 +234,7 @@ function hide(force, skip_state) {
 
 	state.ui.settings_visible = false;
 	uiu.$visible_qs('#settings_wrapper', false);
+	uiu.$visible_qs('.kiosk_waiting_container', false);
 	bupui.esc_stack_pop();
 	if (!skip_state) {
 		control.set_current(state);
