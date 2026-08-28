@@ -1250,6 +1250,55 @@ function btsh(baseurl, tournament_key) {
 		}
 	}
 
+	// scorecard_with_attendance tablets auto-enter whatever match is
+	// on_court for their assigned court (network.js's ui_render_matchlist)
+	// and then unsubscribe from that match-list feed for as long as a
+	// match is actively displayed (settings.hide() tears down
+	// network.ui_list_matches's subscription) - so if the planner frees
+	// the court from BTS's own side (or the match otherwise leaves this
+	// court) while a tablet is sitting on the scorecard/attendance screen,
+	// nothing was checking for that. This runs on every score-update
+	// regardless of that subscription state (mirrors
+	// _apply_current_match_update_from_event, called right before this),
+	// so it's the one place that reliably notices a freed court even
+	// mid-match.
+	function _check_kiosk_match_left_court(event) {
+		if (!state || !state.initialized || !state.metadata) {
+			return;
+		}
+		if (!state.settings || state.settings.tablet_mode !== 'scorecard_with_attendance') {
+			return;
+		}
+		if (!event || !event.matches) {
+			return;
+		}
+		var current_match_id = String(state.metadata.id || '');
+		var normalized_current_match_id = _normalize_bts_match_id(current_match_id);
+		var still_on_court = event.matches.some(function(candidate) {
+			if (!candidate || !candidate.setup || !candidate.setup.now_on_court) {
+				return false;
+			}
+			var candidate_match_id = String(candidate.setup.match_id || '');
+			return (
+				candidate_match_id === current_match_id ||
+				_normalize_bts_match_id(candidate_match_id) === normalized_current_match_id
+			);
+		});
+		if (still_on_court) {
+			return;
+		}
+		if (v2_debug) console.log('[bup v2] kiosk match no longer on its court - returning to waiting screen', {
+			ts: Date.now(),
+			current_match_id: current_match_id,
+			event_match_ids: event.matches.map(function(candidate) {
+				return candidate && candidate.setup ? candidate.setup.match_id : null;
+			}),
+		});
+		control.stop_match(state);
+		settings.show();
+		settings.on_mode_change(state);
+	}
+
 	function _release_match_if_active(val) {
 		if (!state || !state.initialized || !state.metadata || !val || !val.match_id) {
 			return false;
@@ -1302,6 +1351,7 @@ function btsh(baseurl, tournament_key) {
 					}) : [],
 				});
 				_apply_current_match_update_from_event(state.bts_event);
+				_check_kiosk_match_left_court(state.bts_event);
 				if (bts_update_callback != null) {
 					bts_update_callback(null, state, state.bts_event);
 					var first_match = state.bts_event && state.bts_event.matches ? state.bts_event.matches[0] : null;
