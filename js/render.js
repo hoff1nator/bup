@@ -300,6 +300,10 @@ function ui_render(s) {
 	if (document.body) {
 		document.body.classList.toggle('dark_kiosk_theme', dark_kiosk_theme);
 	}
+	uiu.$visible_qs('.kiosk_court_badge', dark_kiosk_theme);
+	if (dark_kiosk_theme) {
+		uiu.text_qs('.kiosk_court_badge', compat.courtnum(s.match.court_id || s.settings.court_id));
+	}
 
 	uiu.$visible_qs('.kiosk_container', kiosk_active);
 	if (kiosk_active) {
@@ -581,6 +585,7 @@ if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var bupui = require('./bupui');
 	var calc = require('./calc');
 	var click = require('./click');
+	var compat = require('./compat');
 	var control = require('./control');
 	var court = require('./court');
 	var editmode = require('./editmode');

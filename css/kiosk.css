@@ -123,3 +123,23 @@ body.dark_kiosk_theme {
 	font-weight: bold;
 	text-align: center;
 }
+
+/* Which court this tablet is bound to, shown at a glance regardless of
+   which of the three kiosk-mode screens (waiting/attendance/scorecard) is
+   currently up - render.js and settings.js both keep its text and
+   visibility in sync with s.settings.court_id. */
+.kiosk_court_badge {
+	position: fixed;
+	top: 1.5vh;
+	left: 1.5vh;
+	z-index: 1000;
+	font-size: 5vh;
+	font-weight: 800;
+	line-height: 1;
+	color: #eee;
+	background: #222;
+	border: 0.2vh solid #555;
+	border-radius: 1.2vh;
+	padding: 0.6vh 1.6vh;
+	pointer-events: none;
+}

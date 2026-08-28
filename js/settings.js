@@ -190,6 +190,8 @@ function show() {
 	// match and enters it automatically (see ui_render_matchlist).
 	if (_is_kiosk_waiting_mode(state)) {
 		uiu.$visible_qs('.kiosk_waiting_container', true);
+		uiu.text_qs('.kiosk_court_badge', compat.courtnum(state.settings.court_id));
+		uiu.$visible_qs('.kiosk_court_badge', true);
 		if (document.body) {
 			document.body.classList.add('dark_kiosk_theme');
 		}
@@ -203,6 +205,7 @@ function show() {
 	}
 
 	uiu.$visible_qs('#settings_wrapper', true);
+	uiu.$visible_qs('.kiosk_court_badge', false);
 	var net_enabled = network.is_enabled();
 	uiu.$visible_qs('.setup_network_container', net_enabled);
 	uiu.$visible_qs('.import_container', ! net_enabled);
@@ -679,6 +682,7 @@ return {
 if ((typeof module !== 'undefined') && (typeof require !== 'undefined')) {
 	var bupui = require('./bupui');
 	var click = require('./click');
+	var compat = require('./compat');
 	var control = require('./control');
 	var dads = require('./dads');
 	var displaymode = require('./displaymode');
