@@ -67,6 +67,34 @@ function btsh(baseurl, tournament_key) {
 		};
 	}
 
+	// Persistent per-browser identity for this BTS panel connection, kept
+	// separate from refmode_client_ui's node_id (that one's lifecycle is
+	// tied to referee-hub pairing, not panel identity - conflating them
+	// would mean a referee-pairing reset also silently resets which court
+	// a tablet is bound to). The server previously derived client_id from
+	// the connection's source IP, which collapses every device behind the
+	// same NAT/reverse-proxy/Docker network onto one identity - this makes
+	// each browser generate and keep its own id instead.
+	var _bts_client_id = null;
+	function get_bts_client_id() {
+		if (_bts_client_id) {
+			return _bts_client_id;
+		}
+		try {
+			_bts_client_id = window.localStorage && window.localStorage.getItem('bup_bts_client_id');
+			if (_bts_client_id) {
+				return _bts_client_id;
+			}
+		} catch (e) { /* ignore, generate a new one */ }
+		_bts_client_id = utils.uuid();
+		try {
+			if (window.localStorage) {
+				window.localStorage.setItem('bup_bts_client_id', _bts_client_id);
+			}
+		} catch (e) { /* ignore */ }
+		return _bts_client_id;
+	}
+
 	function _request_json(s, component, options, cb) {
 		options.dataType = 'text';
 		options.timeout = s.settings.network_timeout;
@@ -1437,7 +1465,7 @@ function btsh(baseurl, tournament_key) {
 	}
 
 	function reload_match_information() {
-		ws.sendmsg({ type: 'init', initialize_display: !display_initialized, tournament_key: tournament_key, panel_settings: _panel_settings_payload() });
+		ws.sendmsg({ type: 'init', initialize_display: !display_initialized, tournament_key: tournament_key, client_id: get_bts_client_id(), panel_settings: _panel_settings_payload() });
 		display_initialized = true;
 	}
 
