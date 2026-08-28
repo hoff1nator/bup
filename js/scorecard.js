@@ -94,7 +94,14 @@ function _current_game_idx(s) {
 }
 
 function _current_set_points(setup, game_idx) {
-	var scoring_format = setup && setup.scoring_format;
+	// Most matches only carry setup.counting (e.g. "3x21"), not an explicit
+	// scoring_format object - calc.js's own game-winner logic already
+	// normalizes this fallback internally (_normalize_setup), but that
+	// helper isn't exported, so mirror it here via the exported
+	// scoring_format_from_counting instead of assuming scoring_format is
+	// always present (it wasn't, which is why the slider always ran 0-99
+	// regardless of the actual counting scheme).
+	var scoring_format = (setup && setup.scoring_format) || (setup && calc.scoring_format_from_counting(setup.counting));
 	if (!scoring_format) {
 		return null;
 	}
