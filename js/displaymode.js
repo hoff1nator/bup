@@ -1238,6 +1238,71 @@ function render_tournament_overview_dm(s, container, event) {
 		_ostbek_build(container, 'Sportforum', [10, 11, 12, 13, 14, 15], [16, 17], event, true);
 	}
 
+	// v2 push-protocol renderer. Unlike most v2_* renderers this doesn't do
+	// incremental DOM patching on score updates -- it converts the v2
+	// court_states DTO into the classic event.courts/event.matches shape and
+	// always fully rebuilds via _ostbek_build. Simpler, and cheap enough for
+	// a display that updates on match/call changes rather than live scoring.
+	function _v2_ostbek_event_from_dto(dto) {
+		var event = { courts: [], matches: [] };
+		(dto.court_states || []).forEach(function(cs) {
+			var court = (cs && cs.court) || {};
+			var label = court.label || (court.num != null ? String(court.num) : '');
+			var court_id = court.id || label;
+			var match_id = (cs && cs.match) ? String(cs.match.id) : undefined;
+			event.courts.push({
+				court_id: court_id,
+				label: label,
+				match_id: match_id,
+			});
+			if (cs && cs.match) {
+				var teams = (cs.teams || []).map(function(team) {
+					return {
+						players: (team.player_details || []).map(function(p) {
+							return { name: p && p.name };
+						}),
+					};
+				});
+				event.matches.push({
+					setup: {
+						match_id: match_id,
+						court_id: court_id,
+						event_name: cs.match.event_name || '',
+						match_name: cs.match.round_name || '',
+						is_doubles: !!cs.match.is_doubles,
+						teams: teams,
+					},
+				});
+			}
+		});
+		return event;
+	}
+
+	function _v2_ostbek_render(s, dto, style) {
+		if (!s || !s.settings || s.settings.displaymode_style !== style || !dto || dto.type !== 'display_multi_state') {
+			return false;
+		}
+		var container = _v2_prepare_full_render_container(style);
+		if (!container) {
+			return false;
+		}
+		var event = _v2_ostbek_event_from_dto(dto);
+		if (style === 'ostbek1') {
+			_ostbek_build(container, 'Walter-Ruckert-Halle', [1, 2, 3, 4, 5, 6], [7, 8, 9], event);
+		} else {
+			_ostbek_build(container, 'Sportforum', [10, 11, 12, 13, 14, 15], [16, 17], event, true);
+		}
+		return true;
+	}
+
+	function render_v2_ostbek1_display_state(s, dto) {
+		return _v2_ostbek_render(s, dto, 'ostbek1');
+	}
+
+	function render_v2_ostbek2_display_state(s, dto) {
+		return _v2_ostbek_render(s, dto, 'ostbek2');
+	}
+
 
 function render_castall(s, container, event, colors) {
 	if (!event.courts) {
@@ -9508,6 +9573,12 @@ function render_v2_display_state(s, dto) {
 	if (s.settings.displaymode_style === 'tournament_overview_dm' && dto.type === 'display_multi_state') {
 		return _v2_tournament_overview_dm_patch(_v2_tournament_overview_dm_cache, s, dto);
 	}
+	if (s.settings.displaymode_style === 'ostbek1' && dto.type === 'display_multi_state') {
+		return render_v2_ostbek1_display_state(s, dto);
+	}
+	if (s.settings.displaymode_style === 'ostbek2' && dto.type === 'display_multi_state') {
+		return render_v2_ostbek2_display_state(s, dto);
+	}
 	if (dto.type === 'court_picker_state') {
 		return false;
 	}
@@ -9589,6 +9660,12 @@ function render_v2_display_score_update(s, dto) {
 	}
 	if (s.settings.displaymode_style === 'tournament_overview_dm' && dto.type === 'display_multi_state') {
 		return _v2_tournament_overview_dm_patch(_v2_tournament_overview_dm_cache, s, dto);
+	}
+	if (s.settings.displaymode_style === 'ostbek1' && dto.type === 'display_multi_state') {
+		return render_v2_ostbek1_display_state(s, dto);
+	}
+	if (s.settings.displaymode_style === 'ostbek2' && dto.type === 'display_multi_state') {
+		return render_v2_ostbek2_display_state(s, dto);
 	}
 	return false;
 }
