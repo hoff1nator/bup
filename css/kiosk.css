@@ -81,12 +81,17 @@
 	cursor: default;
 }
 
+/* Shared across all three kiosk-mode screens (waiting/attendance/
+   scorecard), same as .kiosk_court_badge - top-right corner so it never
+   overlaps the court badge in the top-left. */
 .kiosk_fullscreen_button {
-	align-self: center;
-	margin-top: 1vh;
+	position: fixed;
+	top: 1.5vh;
+	right: 1.5vh;
+	z-index: 1000;
 	padding: 1vh 2.5vh;
 	font-size: 1.8vh;
-	background: transparent;
+	background: #222;
 	color: #888;
 	border: 0.15vh solid #555;
 	border-radius: 1vh;

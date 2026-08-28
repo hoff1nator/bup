@@ -301,6 +301,7 @@ function ui_render(s) {
 		document.body.classList.toggle('dark_kiosk_theme', dark_kiosk_theme);
 	}
 	uiu.$visible_qs('.kiosk_court_badge', dark_kiosk_theme);
+	uiu.$visible_qs('.kiosk_fullscreen_button', dark_kiosk_theme);
 	if (dark_kiosk_theme) {
 		uiu.text_qs('.kiosk_court_badge', compat.courtnum(s.match.court_id || s.settings.court_id));
 	}

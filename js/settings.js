@@ -192,6 +192,7 @@ function show() {
 		uiu.$visible_qs('.kiosk_waiting_container', true);
 		uiu.text_qs('.kiosk_court_badge', compat.courtnum(state.settings.court_id));
 		uiu.$visible_qs('.kiosk_court_badge', true);
+		uiu.$visible_qs('.kiosk_fullscreen_button', true);
 		if (document.body) {
 			document.body.classList.add('dark_kiosk_theme');
 		}
@@ -206,6 +207,7 @@ function show() {
 
 	uiu.$visible_qs('#settings_wrapper', true);
 	uiu.$visible_qs('.kiosk_court_badge', false);
+	uiu.$visible_qs('.kiosk_fullscreen_button', false);
 	var net_enabled = network.is_enabled();
 	uiu.$visible_qs('.setup_network_container', net_enabled);
 	uiu.$visible_qs('.import_container', ! net_enabled);
