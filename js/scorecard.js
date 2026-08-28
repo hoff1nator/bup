@@ -10,7 +10,7 @@ function is_enabled(s) {
 		s &&
 		settings.get_mode(s) === 'umpire' &&
 		s.settings &&
-		s.settings.tablet_mode === 'scorecard' &&
+		(s.settings.tablet_mode === 'scorecard' || s.settings.tablet_mode === 'scorecard_with_attendance') &&
 		s.initialized &&
 		s.setup &&
 		s.match &&
@@ -314,6 +314,16 @@ function render_ui(s) {
 	if (!active) {
 		return;
 	}
+
+	// "scorecard_with_attendance" reuses the exact same slip layout and
+	// interaction (winner buttons, loser-points slider) as the original
+	// "scorecard" mode - only the color theme differs, toggled here via a
+	// CSS modifier class rather than a second copy of this markup/logic.
+	uiu.setClass(
+		uiu.qs('.scorecard_container'),
+		'scorecard_theme_dark',
+		s.settings.tablet_mode === 'scorecard_with_attendance'
+	);
 
 	uiu.text_qs('.scorecard_meta_competition', _display_value(s.setup.event_name));
 	uiu.text_qs('.scorecard_meta_round', _display_value(s.setup.match_name));

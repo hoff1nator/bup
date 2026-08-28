@@ -193,6 +193,7 @@ var i18n_en = {
 'settings:tablet_mode': 'Tablet mode',
 'settings:tablet_mode:umpire': 'Umpire panel',
 'settings:tablet_mode:scorecard': 'Score slip',
+'settings:tablet_mode:scorecard_with_attendance': 'Score slip (dark, with attendance check)',
 'settings:Abort Manual Edit': 'Cancel manual editing',
 'settings:Matches': 'Matches',
 'settings:Event Scoresheets': 'scoresheets',

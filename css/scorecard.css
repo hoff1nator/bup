@@ -495,3 +495,115 @@
 	margin: 0;
 	padding: 0.6em 1.6em;
 }
+
+/* "scorecard_with_attendance" tablet mode: same slip layout, same winner
+   buttons, same loser-points slider as the default scorecard above - only
+   the color theme changes, to match the dark kiosk/presence-check screen
+   it's paired with. Nothing here touches layout/sizing rules. */
+.scorecard_container.scorecard_theme_dark {
+	background: #111;
+	color: #eee;
+	border-radius: 2vh;
+}
+
+.scorecard_container.scorecard_theme_dark::after {
+	background: #111;
+	border-color: #333;
+}
+
+.scorecard_theme_dark .scorecard_meta_label {
+	color: #999;
+}
+
+.scorecard_theme_dark .scorecard_meta_value {
+	color: #eee;
+}
+
+.scorecard_theme_dark .scorecard_sheet_team.scorecard_sheet_team_winner::after {
+	border-color: #4caf50;
+}
+
+.scorecard_theme_dark .scorecard_sheet_rows,
+.scorecard_theme_dark .scorecard_sheet_result_rows {
+	border-color: #555;
+	background: #181828;
+}
+
+.scorecard_theme_dark .scorecard_sheet_row,
+.scorecard_theme_dark .scorecard_sheet_result_row {
+	border-top-color: #444;
+}
+
+.scorecard_theme_dark .scorecard_sheet_rows .scorecard_sheet_row:nth-child(2)::before {
+	background-image: repeating-linear-gradient(
+		to right,
+		#555 0 1.8vh,
+		transparent 1.8vh 3.1vh
+	);
+}
+
+.scorecard_theme_dark .scorecard_sheet_result_title {
+	color: #aaa;
+}
+
+.scorecard_theme_dark .scorecard_sheet_result_row_active {
+	background: #3d3000;
+}
+
+.scorecard_theme_dark .scorecard_inline_apply {
+	background: #232338;
+	background-color: #232338;
+	color: #eee;
+}
+
+.scorecard_theme_dark .scorecard_editor::before {
+	background: #111;
+}
+
+.scorecard_theme_dark .scorecard_winner_label,
+.scorecard_theme_dark .scorecard_loser_points_label > span {
+	color: #999;
+}
+
+.scorecard_theme_dark .scorecard_winner_button {
+	border-color: #555;
+	background: #181828;
+	color: #eee;
+}
+
+.scorecard_theme_dark .scorecard_winner_button.scorecard_selected {
+	border-color: #7b1fa2;
+	background: #2a1240;
+}
+
+.scorecard_theme_dark .scorecard_loser_points_value {
+	background: #181828;
+	border-color: #555;
+	color: #eee;
+}
+
+.scorecard_theme_dark .scorecard_loser_points::-webkit-slider-runnable-track {
+	background: #444;
+}
+
+.scorecard_theme_dark .scorecard_loser_points::-webkit-slider-thumb {
+	border-color: #7b1fa2;
+	background: #eee;
+}
+
+.scorecard_theme_dark .scorecard_loser_points::-moz-range-track {
+	background: #444;
+}
+
+.scorecard_theme_dark .scorecard_loser_points::-moz-range-thumb {
+	border-color: #7b1fa2;
+	background: #eee;
+}
+
+.scorecard_theme_dark .scorecard_status {
+	color: #999;
+}
+
+.scorecard_theme_dark .scorecard_status.scorecard_error {
+	color: #ff6b6b;
+}

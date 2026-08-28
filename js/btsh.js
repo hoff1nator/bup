@@ -1308,7 +1308,11 @@ function btsh(baseurl, tournament_key) {
 				) {
 					next_settings.tablet_mode = previous_settings.tablet_mode;
 				}
-				if ((next_settings.tablet_mode !== 'umpire') && (next_settings.tablet_mode !== 'scorecard')) {
+				if (
+					(next_settings.tablet_mode !== 'umpire') &&
+					(next_settings.tablet_mode !== 'scorecard') &&
+					(next_settings.tablet_mode !== 'scorecard_with_attendance')
+				) {
 					next_settings.tablet_mode = 'umpire';
 				}
 				var had_assigned_court = !!(

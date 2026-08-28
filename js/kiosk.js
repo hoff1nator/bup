@@ -1,8 +1,10 @@
 'use strict';
-// Presence-confirmation pre-step for kiosk tablets. Gates in front of
-// scorecard.js: once both teams have confirmed presence, is_active()
-// goes false and render.js falls through to the normal scorecard UI —
-// no explicit hand-off, it's reactive to s.setup.teams_present.
+// Presence-confirmation pre-step for kiosk tablets, active only in
+// "scorecard_with_attendance" tablet mode (not plain "scorecard", which
+// stays exactly as it always was). Gates in front of scorecard.js: once
+// both teams have confirmed presence, is_active() goes false and render.js
+// falls through to the normal scorecard UI — no explicit hand-off, it's
+// reactive to s.setup.teams_present.
 
 var kiosk = (function() {
 
@@ -56,6 +58,7 @@ function is_active(s) {
 	return !!(
 		s &&
 		scorecard.is_enabled(s) &&
+		s.settings.tablet_mode === 'scorecard_with_attendance' &&
 		s.setup.now_on_court &&
 		!s.setup.teams_present
 	);
